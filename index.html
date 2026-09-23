@@ -272,6 +272,38 @@ input{font:inherit;color:inherit}
 /* hidden amounts */
 .hidden-amt{letter-spacing:2px}
 
+
+/* payments */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.svc{background:#fff;border-radius:20px;height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;font-size:13px;font-weight:600;padding:8px;cursor:pointer;position:relative;overflow:hidden;line-height:1.25}
+.svc:active{transform:scale(.97)}
+.svc svg{width:30px;height:30px}
+.svc-ic{color:var(--accent);display:flex}
+.ribbon{position:absolute;top:12px;right:-26px;transform:rotate(45deg);background:#FFD84D;color:#111;font-size:10px;font-weight:700;width:96px;text-align:center;padding:3px 0;letter-spacing:.5px}
+.rb{margin:0 16px 16px;border-radius:20px;background:#fff;padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer}
+.rb.on{background:linear-gradient(120deg,#F3EBFF,#E9DCFF)}
+.rb.promo{background:linear-gradient(120deg,#8F3BFF,#6200EA);color:#fff}
+.rb.promo .rb-s{color:rgba(255,255,255,.8)}
+.rb.promo .rb-ic{background:rgba(255,255,255,.18)}
+.rb.promo .badge{color:var(--accent)}
+.rb-ic{flex:none;width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}
+.rb-ic.gray{background:#C9C9D2}
+.rb-ic svg{width:22px;height:22px}
+.rb-t{font-size:15px;font-weight:600}
+.rb-s{font-size:13px;color:#5B4A7A;margin-top:2px;line-height:1.3}
+.round-box{background:linear-gradient(120deg,#F5EFFF,#ECE1FF);border-radius:18px;padding:14px 16px;margin:0 0 12px}
+.round-box.promo{background:#fff;border:1.5px dashed #C9A6FF}
+.round-box.done{background:linear-gradient(120deg,#EAF8F0,#F3EBFF)}
+.round-box .act{display:inline-block;margin-top:8px;font-weight:600;color:var(--accent);cursor:pointer;font-size:14px}
+.rbx-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent-ink)}
+.rbx-h svg{width:18px;height:18px}
+.rbx-line{font-size:18px;font-weight:600;margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rbx-h .plus{margin-left:auto;font-size:17px}
+.rl{display:flex;justify-content:space-between;align-items:baseline;gap:16px;font-size:15px;padding:7px 0}
+.rl b{font-weight:600}
+.rbx-sub{font-size:13px;color:#5B4A7A;margin-top:4px;line-height:1.35}
+.rbx-goal{font-size:13px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(112,0,255,.12)}
+
 /* ---------- demo panel ---------- */
 .panel{width:330px;max-height:calc(100vh - 40px);overflow-y:auto;background:#fff;border-radius:24px;padding:22px 20px;font-size:14px;box-shadow:0 10px 40px rgba(20,10,60,.08);scrollbar-width:thin}
 .panel h1{font-size:19px;font-weight:700;margin-bottom:4px}
@@ -363,6 +395,10 @@ input{font:inherit;color:inherit}
     <option value="settings">8. Настройки</option>
     <option value="consents">8. Мои согласия</option>
     <option value="history">История операций</option>
+    <option value="payments">Оплата: все сервисы</option>
+    <option value="payCat:home">Оплата → Коммунальные</option>
+    <option value="payForm:home:0">Оплата → Газ Ташкентск</option>
+    <option value="payForm:mobile:2">Оплата → Mobiuz</option>
   </select>
 
   <div class="plog" id="plog">Готово. Нажмите на виджет «Авто-накопления» на главной или пришлите push с предложением.</div>
@@ -464,6 +500,8 @@ const MERCHANTS = [
   {n:'Pharmacy Dori-Darmon', c:'#0FA3B1', min:9000, max:80000},
 ];
 const merchantColor = n => (MERCHANTS.find(m=>m.n===n)||{c:'#6E6E73'}).c;
+const opColor = o => o.color || merchantColor(o.merchant);
+const kapitalBalance = () => S.kapital ?? 153831;
 const TERMS = {version:'1.2', date: new Date(2026,8,1).getTime()};
 
 /* =========================================================
@@ -510,8 +548,8 @@ function potBalance(){
   const out = S.withdrawals.reduce((s,w)=>s+w.amount,0);
   return Math.max(0, Math.round((inn-out)*100)/100);
 }
-function allocations(){
-  let rest = potBalance();
+function allocations(extra=0){
+  let rest = potBalance() + extra;
   return S.goals.map(g => { const a = Math.min(rest, g.target); rest -= a; return {g, alloc:a, pct: g.target ? a/g.target : 0}; });
 }
 const allocOf = id => allocations().find(x => x.g.id === id);
@@ -618,7 +656,7 @@ SCREENS.home = () => {
         </div>
         <div class="row">
           <div class="cardthumb dark"><i style="background:#F5C400"></i><b>U</b></div>
-          <div class="tx"><div class="t1">${money(153831)}</div><div class="t2">9137 · Kapitalbank</div></div>${chev}
+          <div class="tx"><div class="t1">${money(kapitalBalance())}</div><div class="t2">9137 · Kapitalbank</div></div>${chev}
         </div>
         <div class="row">
           <div class="cardthumb dark"><i style="background:#2F4FD0"></i><b>U</b></div>
@@ -678,14 +716,406 @@ SCREENS.transfers = () => `
     </div>
   </div>${bottomNav('transfers')}</div>`;
 
+/* ---------- Payments: data ---------- */
+const PAY_ICONS = {
+  req: I('<rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 11h14M8 21v-3M16 21v-3"/><circle cx="8.5" cy="14.5" r=".9" fill="currentColor"/><circle cx="15.5" cy="14.5" r=".9" fill="currentColor"/>', 2.2),
+  mobile: I('<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/>', 2.2),
+  food: I('<path d="M4 11a8 6 0 0 1 16 0z"/><path d="M3 14.5h18M4.5 18h15a2 2 0 0 1-2 2.5h-11a2 2 0 0 1-2-2.5"/>', 2.2),
+  shop: I('<path d="M4 4h16l1 5a3 3 0 0 1-5.5 1.5 3 3 0 0 1-5 0A3 3 0 0 1 3 9z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/>', 2.2),
+  home: I('<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>', 2.2),
+  med: I('<path d="m18 2 4 4M17 7l-9.5 9.5-3-3L14 4M19 5l-2 2M9 11l2 2M11 9l2 2M4.5 16.5 2 22l5.5-2.5"/>', 2.2),
+  wifi: I('<path d="M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/>', 2.4),
+  edu: I('<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/>', 2.2),
+  fun: I('<path d="M4 4h9v6a4.5 4.5 0 0 1-9 0z"/><path d="M11 13.5A4.5 4.5 0 0 0 20 13V7h-5"/><path d="M6.5 8h.01M10.5 8h.01M6.5 11.5c1 .8 3 .8 4 0"/>', 2),
+};
+const PAY_CATS = [
+  {id:'req', title:'Оплата по реквизитам', icon:'req', top:true, type:'requisites', about:'Организации, налоги и штрафы', providers:[
+    {n:'Юридическому лицу', c:'#4B4E5C', sub:'По расчётному счёту, МФО и ИНН'},
+    {n:'Налоги (Soliq)', c:'#0B6E4F', sub:'Имущественный и земельный налог', type:'account', label:'ИНН или ПИНФЛ', debt:184300, acc:'31509740210017'},
+    {n:'Штрафы ГАИ', c:'#1E4FA8', sub:'По номеру постановления', type:'account', label:'Номер постановления', debt:375000},
+  ]},
+  {id:'mobile', title:'Связь', cashback:3, icon:'mobile', type:'phone', chips:[10000,20000,50000,100000], about:'Пополнение мобильного баланса', providers:[
+    {n:'Beeline', c:'#E5B800', sub:'+998 90, 91'},
+    {n:'Ucell', c:'#7B2D8E', sub:'+998 93, 94'},
+    {n:'Mobiuz', c:'#E30613', sub:'+998 97, 88', phone:'+998 97 433-19-48'},
+    {n:'Uzmobile', c:'#0072BC', sub:'+998 99, 95'},
+    {n:'Humans', c:'#FF6B00', sub:'+998 33'},
+  ]},
+  {id:'food', title:'Рестораны', icon:'food', type:'order', chips:[35000,60000,100000], about:'Оплата заказа и доставки', providers:[
+    {n:'Evos', c:'#1B8E3C', sub:'Фастфуд · доставка'},
+    {n:'Oqtepa Lavash', c:'#F28C00', sub:'Фастфуд'},
+    {n:'Safia', c:'#8C5A3C', sub:'Кофейня и пекарня'},
+    {n:'Les Ailes', c:'#E4002B', sub:'Фастфуд'},
+    {n:'Max Way', c:'#1F3A93', sub:'Фастфуд · доставка'},
+    {n:'Bon!', c:'#C8102E', sub:'Кафе-кондитерская'},
+  ]},
+  {id:'shop', title:'Магазины и Салоны', icon:'shop', type:'order', chips:[50000,100000,250000], about:'Супермаркеты, электроника, салоны', providers:[
+    {n:'Korzinka', c:'#E0182D', sub:'Супермаркет · кешбэк 7%'},
+    {n:'Makro', c:'#D6001C', sub:'Супермаркет'},
+    {n:'Havas', c:'#00A651', sub:'Супермаркет'},
+    {n:'Texnomart', c:'#F37021', sub:'Электроника'},
+    {n:'Mediapark', c:'#E31E24', sub:'Электроника'},
+    {n:'Uzum Market', c:'#7000FF', sub:'Маркетплейс'},
+  ]},
+  {id:'home', title:'Коммунальные', cashback:3, icon:'home', type:'account', label:'Лицевой счёт', about:'Газ, свет, вода, отопление', providers:[
+    {n:'Газ Ташкентск', c:'#1B4F8A', sub:'Hududgaz Toshkent', debt:87432.4, acc:'1029384756', short:'HGT'},
+    {n:'Электроэнергия', c:'#E5A100', sub:'Hududiy elektr tarmoqlari', debt:143215.6},
+    {n:'Холодная вода', c:'#0FA3B1', sub:'Suvsoz', debt:32118},
+    {n:'Отопление и горячая вода', c:'#E0582D', sub:'Toshissiqquvvati', debt:215740.8},
+    {n:'Вывоз мусора', c:'#3C8D2F', sub:'Maxsustrans', debt:12600},
+  ]},
+  {id:'med', title:'Медицина', icon:'med', type:'order', chips:[50000,150000,300000], about:'Клиники, анализы, аптеки', providers:[
+    {n:'Akfa Medline', c:'#00A99D', sub:'Многопрофильная клиника'},
+    {n:'Shox International Hospital', c:'#1D3F8C', sub:'Клиника'},
+    {n:'Intermed', c:'#E4002B', sub:'Лаборатория · анализы'},
+    {n:'Pharmacy Dori-Darmon', c:'#0FA3B1', sub:'Аптека'},
+  ]},
+  {id:'isp', title:'Провайдеры', cashback:3, icon:'wifi', type:'account', label:'Логин или лицевой счёт', chips:[50000,100000,150000,200000], about:'Домашний интернет и ТВ', providers:[
+    {n:'Uzonline', c:'#0072BC', sub:'Интернет'},
+    {n:'Sarkor Telecom', c:'#E30613', sub:'Интернет и ТВ'},
+    {n:'Turon Telecom', c:'#00A651', sub:'Интернет'},
+    {n:'Comnet', c:'#F37021', sub:'Интернет'},
+    {n:'EVO', c:'#6A00F4', sub:'Мобильный интернет'},
+  ]},
+  {id:'edu', title:'Образование', icon:'edu', type:'contract', about:'Контракты, детские сады, курсы', providers:[
+    {n:'Детский сад (MTT)', c:'#F2994A', sub:'По номеру договора', debt:450000},
+    {n:'TDIU — контракт', c:'#1E4FA8', sub:'Ташкентский гос. экономический университет', debt:4850000},
+    {n:'Najot Ta\'lim', c:'#111111', sub:'IT-курсы', debt:1200000},
+    {n:'PDP Academy', c:'#2D9CDB', sub:'IT-курсы'},
+  ]},
+  {id:'fun', title:'Развлечения', icon:'fun', type:'login', chips:[50000,100000,250000], about:'Кино, игры, подписки', providers:[
+    {n:'Magic Cinema', c:'#C8102E', sub:'Билеты в кино', type:'order'},
+    {n:'Steam', c:'#1B2838', sub:'Пополнение кошелька', label:'Логин Steam'},
+    {n:'PlayStation Store', c:'#003791', sub:'Пополнение аккаунта', label:'Email аккаунта'},
+    {n:'Кинопоиск', c:'#FF6600', sub:'Подписка', type:'phone'},
+    {n:'Yandex Plus', c:'#7B3FE4', sub:'Подписка', type:'phone'},
+  ]},
+];
+const catById = id => PAY_CATS.find(c => c.id === id);
+function payFields(cat, p){
+  const t = p.type || cat.type;
+  if (t === 'phone') return [{k:'phone', label:'Номер телефона', value:p.phone || '+998 ', ph:'+998 90 123-45-67', im:'tel', len:12, msg:'Введите номер телефона полностью'}];
+  if (t === 'account') return [{k:'acc', label:p.label || cat.label || 'Лицевой счёт', value:p.acc || '', ph:'Например, 1029384756', im:'numeric'}];
+  if (t === 'order') return [{k:'order', label:'Номер заказа или чека (необязательно)', ph:'Например, 48213', optional:true, im:'numeric'}];
+  if (t === 'contract') return [{k:'contract', label:'Номер договора', ph:'Например, 2026-0917'}, {k:'fio', label:'ФИО', ph:'Фамилия Имя'}];
+  if (t === 'login') return [{k:'login', label:p.label || 'Логин', ph:p.label==='Email аккаунта'?'name@mail.com':'Ваш логин'}];
+  return [
+    {k:'name', label:'Получатель', ph:'ООО «Название»'},
+    {k:'acc', label:'Расчётный счёт', ph:'20 цифр', im:'numeric', len:20},
+    {k:'mfo', label:'МФО банка', ph:'5 цифр', im:'numeric', len:5},
+    {k:'inn', label:'ИНН получателя', ph:'9 цифр', im:'numeric', len:9},
+    {k:'purpose', label:'Назначение платежа', ph:'Оплата по счёту №…'},
+  ];
+}
+const provLogo = (p, size=44) => `<div class="logo" style="width:${size}px;height:${size}px;background:${p.c};font-size:${p.short?Math.round(size/3.6):Math.round(size/2.6)}px">${esc(p.short || p.n.replace(/[^A-Za-zА-Яа-яЁё0-9]/g,'')[0])}</div>`;
+
+/* Round-up banner shown across the payments section */
+function roundBanner(){
+  if (S.enabled) return `
+    <div class="rb on" onclick="go('savings')">
+      <div class="rb-ic">${ICON.piggy}</div>
+      <div style="flex:1;min-width:0"><div class="rb-t">Авто-накопления включены</div><div class="rb-s">Каждая оплата картой •5748 округляется до ${num(S.threshold)} сум · в копилке ${money(potBalance())}</div></div>${chev}
+    </div>`;
+  if (S.everEnabled) return `
+    <div class="rb" onclick="go('savings')">
+      <div class="rb-ic gray">${ICON.piggy}</div>
+      <div style="flex:1"><div class="rb-t">Авто-накопления выключены</div><div class="rb-s">Платежи не округляются. Включить можно в копилке</div></div>${chev}
+    </div>`;
+  return `
+    <div class="rb promo" onclick="openPot()">
+      <div class="rb-ic">${ICON.piggy}</div>
+      <div style="flex:1"><div class="rb-t">Копите со сдачи с каждого платежа</div><div class="rb-s">Округляем оплату до 1 000 сум, разница — в копилку</div></div><span class="badge" style="background:#fff">Подключить</span>
+    </div>`;
+}
+
+/* ---------- Payments tab ---------- */
 SCREENS.payments = () => `
   <div class="screen has-nav"><div class="scroll">
-    <div class="h-big" style="padding-top:40px">Платежи</div>
-    <div class="pad" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-      ${[['🚌','Оплата по реквизитам'],['📱','Связь кешбэк 3%'],['🍔','Рестораны'],['🏪','Магазины и Салоны'],['🏠','Коммунальные кешбэк 3%'],['💉','Медицина'],['📶','Провайдеры кешбэк 3%'],['🎓','Образование'],['🎭','Развлечения']].map(([e,t])=>`
-        <div style="background:#fff;border-radius:20px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;font-size:13px;font-weight:600;padding:8px"><span style="font-size:28px;filter:hue-rotate(0)">${e}</span>${t}</div>`).join('')}
+    <div class="topbar" style="padding-top:4px"><span style="width:40px"></span><div class="title">Оплата</div><button class="icon-btn" onclick="toast('Поиск в прототипе недоступен')">${ICON.search}</button></div>
+    <div class="pad" style="padding-top:6px">
+      <div class="svc" style="width:calc((100% - 20px)/3);height:auto;padding:16px 8px" onclick="toast('Сканер QR в прототипе недоступен')">${ICON.qr.replace('<svg','<svg style="color:var(--accent)"')}Отсканировать QR-код</div>
+    </div>
+    <div style="height:14px"></div>
+    ${roundBanner()}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 20px 12px"><span class="muted" style="font-size:19px">Мой дом</span><button style="color:var(--accent);font-size:17px;font-weight:500" onclick="go('payCat',{id:'home'})">Все платежи</button></div>
+    <div style="display:flex;gap:14px;padding:0 16px 22px;align-items:center">
+      <button style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left" onclick="go('payForm',{cat:'home',p:0})">
+        <div class="logo" style="width:48px;height:48px;border-radius:50%;background:#1B4F8A;font-size:13px">HGT</div>
+        <div style="min-width:0"><div style="font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Газ Ташкентск</div><div class="muted small">К оплате ${fmt(87432.4)}</div></div>
+      </button>
+      <button style="display:flex;align-items:center;gap:10px" onclick="go('payCat',{id:'home'})"><span style="width:48px;height:48px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">${ICON.plus.replace('<svg','<svg width="22" height="22"')}</span><span style="font-size:16px">Добавить</span></button>
+    </div>
+    <div class="muted" style="font-size:19px;padding:0 20px 12px">Все сервисы</div>
+    <div class="pad svc-grid">
+      ${PAY_CATS.map(c => `
+        <div class="svc" onclick="go('payCat',{id:'${c.id}'})">
+          ${c.top ? '<span class="ribbon">TOP</span>' : ''}
+          <span class="svc-ic">${PAY_ICONS[c.icon]}</span>
+          <span>${c.title}${c.cashback ? `<br>кешбэк ${c.cashback}%` : ''}</span>
+        </div>`).join('')}
     </div>
   </div>${bottomNav('payments')}</div>`;
+
+/* ---------- Payment category ---------- */
+SCREENS.payCat = ({id}) => {
+  const cat = catById(id);
+  const recent = S.ops.filter(o => o.cat === id).sort((a,b)=>b.ts-a.ts).slice(0, 5);
+  return `
+  <div class="screen"><div class="scroll">
+    ${topbar('')}
+    <div class="h-big" style="padding-bottom:6px">${cat.title}</div>
+    <div style="display:flex;gap:8px;align-items:center;padding:0 20px 16px"><span class="muted" style="font-size:15px">${cat.about}</span>${cat.cashback?`<span class="badge ok">Кешбэк ${cat.cashback}%</span>`:''}</div>
+    <div class="field" style="height:52px;font-size:16px;gap:10px;justify-content:flex-start">
+      <span style="width:20px;height:20px;display:inline-flex;color:var(--muted)">${ICON.search}</span>
+      <input placeholder="Поиск по названию" style="border:0;outline:0;background:transparent;flex:1;font-size:16px" oninput="filterProv(this.value)">
+    </div>
+    ${roundBanner()}
+    <div class="card" id="prov-list">
+      ${cat.providers.map((p,i) => `
+        <div class="row" data-name="${esc(p.n.toLowerCase())}" onclick="go('payForm',{cat:'${id}',p:${i}})">
+          ${provLogo(p)}
+          <div class="tx"><div class="t1">${esc(p.n)}</div><div class="t2">${esc(p.sub)}</div></div>${chev}
+        </div>`).join('')}
+    </div>
+    ${recent.length ? `<div class="card" style="padding:14px 0 8px">
+      <div style="font-size:19px;font-weight:700;padding:0 20px 4px">Последние платежи</div>
+      ${recent.map(o => `<div class="row" onclick="go('payReceipt',{id:'${o.id}'})">
+        ${provLogo(cat.providers.find(x => x.n === o.merchant) || {n:o.merchant, c:opColor(o)})}
+        <div class="tx"><div class="t1" style="font-size:16px">${esc(o.merchant)}</div><div class="t2" style="font-size:14px">${dayLabel(o.ts)} · −${fmt(o.amount)}</div></div>
+        <div class="right">${o.status==='done'||o.status==='pending'?`<div class="plus" style="font-size:15px">+${fmt(o.round)}</div><div class="muted small">в копилку</div>`:''}</div>
+      </div>`).join('')}</div>` : ''}
+  </div></div>`;
+};
+function filterProv(q){
+  q = q.trim().toLowerCase();
+  document.querySelectorAll('#prov-list .row').forEach(r => r.style.display = !q || r.dataset.name.includes(q) ? '' : 'none');
+}
+
+/* ---------- Payment form ---------- */
+let payDraft = {};
+SCREENS.payForm = ({cat:cid, p:pi}) => {
+  const cat = catById(cid), p = cat.providers[pi];
+  const key = cid + ':' + pi;
+  const fields = payFields(cat, p);
+  if (payDraft.key !== key){
+    payDraft = {key, card:'uzum', amount:'', f:{}};
+    fields.forEach(f => payDraft.f[f.k] = f.value || '');
+    if (p.debt && payDraft.f.acc) payDraft.amount = String(p.debt);
+  }
+  const chips = p.chips || cat.chips || [];
+  const card = payCard();
+  return `
+  <div class="screen"><div class="scroll">
+    ${topbar('')}
+    <div style="display:flex;gap:14px;align-items:center;padding:4px 20px 20px">
+      ${provLogo(p, 56)}
+      <div style="min-width:0"><div style="font-size:24px;font-weight:700;letter-spacing:-.3px">${esc(p.n)}</div><div class="muted" style="font-size:14px;margin-top:2px">${esc(p.sub)}${cat.cashback?` · <span style="color:var(--ok);font-weight:600">кешбэк ${cat.cashback}%</span>`:''}</div></div>
+    </div>
+    <div class="pad">
+      ${fields.map(f => `<div class="inp"><label>${f.label}</label><input ${f.im?`inputmode="${f.im}"`:''} placeholder="${esc(f.ph||'')}" value="${esc(payDraft.f[f.k]||'')}" oninput="payDraft.f['${f.k}']=this.value;${p.debt?'updateDebt();':''}updatePay()"></div>`).join('')}
+      <div id="pay-debt">${debtBox(p)}</div>
+      <div class="inp"><label>Сумма, сум</label><input id="pay-amt" inputmode="decimal" placeholder="0" value="${String(payDraft.amount).replace('.',',')}" oninput="payDraft.amount=this.value.replace(/\s/g,'').replace(',','.');updatePay()" style="font-size:26px;font-weight:600"></div>
+      ${chips.length ? `<div class="chips">${chips.map(v=>`<button class="chip-b" onclick="setPayAmount(${v})">${num(v)}</button>`).join('')}</div>` : ''}
+      <div class="inp" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:12px 16px" onclick="cardPick()">
+        <div class="cardthumb ${card.cls}">${card.inner}</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:500">${card.label}</div><div class="muted small" style="margin-top:2px">Доступно ${money(card.bal)}</div></div>
+        <span class="chev">${ICON.chevR}</span>
+      </div>
+      <div id="pay-round"></div>
+    </div>
+  </div>
+  <div class="footer-cta"><button class="btn" id="pay-btn" onclick="payConfirm()">Оплатить</button></div>
+  </div>`;
+};
+function payCard(){
+  return payDraft.card === 'uzum'
+    ? {id:'uzum', label:'Карта Uzum •5748', bal:S.cardBalance, cls:'uzum', inner:''}
+    : {id:'9137', label:'Kapitalbank •9137', bal:kapitalBalance(), cls:'dark', inner:'<i style="background:#F5C400"></i><b>U</b>'};
+}
+function curPay(){ const {cat, p} = current().params; const c = catById(cat); return {cat:c, p:c.providers[p]}; }
+function debtBox(p){
+  if (!p.debt) return '';
+  const acc = (payDraft.f.acc || payDraft.f.contract || '').replace(/\D/g,'');
+  if (acc.length < 4) return '';
+  return `<div class="note info" style="margin:0 0 12px">${ICON.doc}<div>${p.type==='account'||!p.type?'Задолженность':'К оплате'} на ${dateShort(startOfDay(Date.now())-3*DAY)}: <b>${fmt(p.debt)}</b><br><span class="act" onclick="setPayAmount(${p.debt})">Оплатить всю сумму</span></div></div>`;
+}
+function updateDebt(){
+  const {p} = curPay(); const el = document.getElementById('pay-debt'); if (!el) return;
+  const had = el.innerHTML !== '';
+  el.innerHTML = debtBox(p);
+  if (!had && el.innerHTML && !payDraft.amount && p.debt <= S.cardBalance) setPayAmount(p.debt);
+}
+function setPayAmount(v){ payDraft.amount = String(v); const i = document.getElementById('pay-amt'); if (i) i.value = String(v).replace('.',','); updatePay(); }
+function payCalc(){
+  const {cat} = curPay();
+  const amount = Math.round((parseFloat(payDraft.amount) || 0) * 100) / 100;
+  const card = payCard();
+  const r = roundUp(amount, S.threshold);
+  const rDemo = roundUp(amount, 1000);
+  const rounds = S.enabled && card.id === 'uzum' && r > 0;
+  const lack = amount > card.bal;
+  const skip = rounds && !lack && card.bal - amount < r;
+  const cashback = cat.cashback ? Math.round(amount * cat.cashback / 100) : 0;
+  return {amount, card, r, rDemo, rounds, lack, skip, cashback};
+}
+function updatePay(){
+  const el = document.getElementById('pay-round'), btn = document.getElementById('pay-btn');
+  if (!el) return;
+  const c = payCalc();
+  let html = '';
+  if (c.lack && c.amount > 0){
+    html = `<div class="note warn" style="margin:0 0 12px">${ICON.alert}<div>Недостаточно средств на карте. Доступно ${fmt(c.card.bal)}.</div></div>`;
+  } else if (c.card.id !== 'uzum'){
+    html = `<div class="note gray" style="margin:0 0 12px">${ICON.piggy}<div>Авто-накопления работают с картой Uzum •5748 — этот платёж не округлится.<br><span class="act" onclick="payDraft.card='uzum';render()">Оплатить картой Uzum</span></div></div>`;
+  } else if (!S.everEnabled){
+    html = `<div class="round-box promo">
+      <div class="rbx-h">${ICON.piggy}<span>С Авто-накоплениями</span>${c.amount>0 && c.rDemo>0 ? `<b class="plus">+${fmt(c.rDemo)}</b>` : ''}</div>
+      ${c.amount>0 && c.rDemo>0 ? `<div class="rbx-line">${fmt(c.amount)} <span class="muted">→</span> ${fmt(c.amount+c.rDemo)}</div><div class="rbx-sub">Столько ушло бы в копилку с этого платежа</div>`
+                               : `<div class="rbx-sub">Каждый платёж округлялся бы до 1 000 сум, а разница копилась бы сама</div>`}
+      <span class="act" onclick="openPot()">Подключить →</span></div>`;
+  } else if (!S.enabled){
+    html = `<div class="note gray" style="margin:0 0 12px">${ICON.piggy}<div>Авто-накопления выключены — платёж не округлится.<br><span class="act" onclick="go('savings')">Открыть копилку</span></div></div>`;
+  } else if (!(c.amount > 0)){
+    html = `<div class="round-box"><div class="rbx-h">${ICON.piggy}<span>Авто-накопления</span></div><div class="rbx-sub">Платёж округлится до ${num(S.threshold)} сум, разница уйдёт в копилку</div></div>`;
+  } else if (c.r === 0){
+    html = `<div class="round-box"><div class="rbx-h">${ICON.piggy}<span>Авто-накопления</span></div><div class="rbx-sub">Сумма кратна ${num(S.threshold)} сум — округления не будет</div></div>`;
+  } else if (c.skip){
+    html = `<div class="note warn" style="margin:0 0 12px">${ICON.alert}<div>На карте не хватит ${fmt(c.r)} на округление. Платёж пройдёт, а округление будет пропущено.</div></div>`;
+  } else {
+    const g = allocations().find(a => a.pct < 1);
+    let goalLine = '';
+    if (g){
+      const after = allocations(c.r).find(a => a.g.id === g.g.id);
+      goalLine = `<div class="rbx-goal">${esc(g.g.emoji)} ${esc(g.g.name)}: ${Math.floor(g.pct*100)}% → <b>${Math.floor(after.pct*100)}%</b></div>`;
+    }
+    html = `<div class="round-box">
+      <div class="rbx-h">${ICON.piggy}<span>В копилку</span><b class="plus">+${fmt(c.r)}</b></div>
+      <div class="rbx-line">${fmt(c.amount)} <span class="muted">→</span> ${fmt(c.amount+c.r)}</div>
+      <div class="rbx-sub">уйдёт в копилку через минуту после оплаты</div>${goalLine}</div>`;
+  }
+  if (c.cashback > 0 && !c.lack) html += `<div class="muted small" style="padding:0 4px 8px">Кешбэк ${catById(current().params.cat).cashback}%: <b style="color:var(--ok)">+${fmt(c.cashback)}</b></div>`;
+  el.innerHTML = html;
+  btn.disabled = !(c.amount >= 1000) || c.lack;
+  btn.textContent = c.amount >= 1000 ? `Оплатить ${fmt(c.amount)}` : 'Оплатить';
+}
+function payDetail(){
+  const {cat, p} = curPay();
+  const f = payDraft.f;
+  return f.phone || f.acc && (p.label || cat.label || 'Счёт') + ' ' + f.acc || f.contract && 'Договор ' + f.contract || f.login || f.order && 'Заказ №' + f.order || f.inn && 'ИНН ' + f.inn || '';
+}
+function payConfirm(){
+  const {cat, p} = curPay();
+  const fields = payFields(cat, p);
+  for (const fd of fields){
+    const v = (payDraft.f[fd.k] || '').trim();
+    if (!fd.optional && v.replace(/[+\s-]/g,'').length < 3){ toast(`Заполните поле «${fd.label}»`); return; }
+    if (fd.len && v.replace(/\D/g,'').length !== fd.len){ toast(fd.msg || `${fd.label}: нужно ${fd.len} цифр`); return; }
+  }
+  const c = payCalc();
+  if (!(c.amount >= 1000)){ toast('Минимальная сумма — 1 000 сум'); return; }
+  if (c.lack){ toast('Недостаточно средств'); return; }
+  const line = (k, v) => `<div class="row" style="min-height:46px;cursor:default"><div class="tx muted" style="font-size:15px">${k}</div><div style="font-weight:600;text-align:right">${v}</div></div>`;
+  openSheet(`
+    <h2>Подтвердите платёж</h2>
+    <div style="display:flex;gap:12px;align-items:center;padding:4px 20px 12px">${provLogo(p,40)}<div><div style="font-weight:600">${esc(p.n)}</div><div class="muted small">${esc(payDetail())}</div></div></div>
+    <div class="card" style="background:var(--tile);margin-bottom:14px">
+      ${line('Сумма платежа', fmt(c.amount))}
+      ${line('Комиссия', '0 сум')}
+      ${c.rounds && !c.skip ? line(`Округление в копилку`, `<span style="color:var(--accent)">+${fmt(c.r)}</span>`) : ''}
+      ${line('Спишется с карты', fmt(c.amount + (c.rounds && !c.skip ? c.r : 0)))}
+      ${c.cashback ? line('Кешбэк', `<span style="color:var(--ok)">+${fmt(c.cashback)}</span>`) : ''}
+    </div>
+    ${c.rounds && !c.skip ? `<p class="muted small" style="padding:0 20px 14px;line-height:1.4">Платёж и округление — две отдельные операции. Если платёж отменят, округление вернётся на карту автоматически.</p>` : ''}
+    <div class="pad"><button class="btn" onclick="doPay()">Оплатить ${fmt(c.amount)}</button></div>`);
+}
+function doPay(){
+  const {cat, p} = curPay();
+  const c = payCalc();
+  const op = makePurchase({merchant:p.n, color:p.c, cat:cat.id, amount:c.amount, card:c.card.id, silent:true});
+  op.detail = payDetail(); op.cashback = c.cashback; save();
+  closeSheet();
+  stack[stack.length-1] = {name:'payReceipt', params:{id:op.id, fresh:true}};
+  payDraft = {};
+  render('fade');
+  if (op.status === 'skipped'){
+    setTimeout(() => push({title:'Округление пропущено', text:`На карте не хватило средств для округления платежа ${p.n}. Сам платёж прошёл успешно.`, icon:'info', action:'savings'}), 900);
+    log(`Платёж ${p.n} ${fmt(c.amount)} прошёл. <b>Округление пропущено</b> — не хватило средств.`);
+  } else if (op.status === 'pending') log(`Оплата «${cat.title}» → ${p.n} <b>${fmt(c.amount)}</b> → округление <b>+${fmt(op.round)}</b> в копилку.`);
+  else if (op.card !== 'uzum') log(`Платёж ${p.n} картой Kapitalbank •9137 — <b>без округления</b> (фича работает с картой Uzum).`);
+  else if (op.status === 'none') log(`Платёж ${p.n} ${fmt(c.amount)} кратен ${num(S.threshold)} — округления нет.`);
+  else log(`Платёж ${p.n} ${fmt(c.amount)}. Авто-накопления выключены — <b>без округления</b>.`);
+}
+function cardPick(){
+  const r = (id, cls, inner, label, bal, badge) => `
+    <div class="row" onclick="payDraft.card='${id}';closeSheet();render()">
+      <div class="cardthumb ${cls}">${inner}</div>
+      <div class="tx"><div class="t1">${money(bal)}</div><div class="t2">${label}</div></div>
+      ${badge}${payDraft.card===id?`<span style="color:var(--accent);width:22px;margin-left:6px">${ICON.check}</span>`:''}
+    </div>`;
+  openSheet(`<h2>Списать с</h2>
+    ${r('uzum','uzum','','5748 · Карта Uzum',S.cardBalance,S.enabled?'<span class="badge">🐷 округление</span>':'')}
+    ${r('9137','dark','<i style="background:#F5C400"></i><b>U</b>','9137 · Kapitalbank',kapitalBalance(),'')}
+    <p class="muted small" style="padding:10px 20px 0;line-height:1.4">Авто-накопления округляют платежи только по карте Uzum •5748.</p>`);
+}
+
+/* ---------- Payment receipt ---------- */
+SCREENS.payReceipt = ({id, fresh}) => {
+  const o = S.ops.find(x => x.id === id);
+  if (!o) return SCREENS.payments();
+  const cat = catById(o.cat) || {title:'Покупка'};
+  const line = (k, v) => `<div class="rl"><span class="muted">${k}</span><b style="text-align:right">${v}</b></div>`;
+  let round = '';
+  if (o.status === 'pending') round = `
+    <div class="round-box live">
+      <div class="rbx-h"><span class="spinner"></span><span>Округляем до ${fmt(o.amount + o.round)}</span></div>
+      <div class="rbx-line"><b class="plus">+${fmt(o.round)}</b> <span class="muted" style="font-size:14px;font-weight:400">переводим в копилку…</span></div>
+    </div>`;
+  else if (o.status === 'done'){
+    const g = allocations().find(a => a.pct < 1) || allocations()[0];
+    round = `
+    <div class="round-box done" onclick="resetTo(['home','savings'])" style="cursor:pointer">
+      <div class="rbx-h">${ICON.check.replace('<svg','<svg style="color:var(--ok)"')}<span>+${fmt(o.round)} в копилке</span></div>
+      <div class="rbx-sub">Округлено до ${fmt(o.amount + o.round)} · в копилке теперь <b>${money(potBalance())}</b></div>
+      ${g ? `<div class="rbx-goal">${esc(g.g.emoji)} ${esc(g.g.name)} — ${Math.floor(g.pct*100)}%<div class="mini-prog"><i style="width:${Math.min(100,g.pct*100)}%"></i></div></div>` : ''}
+    </div>`;
+  }
+  else if (o.status === 'skipped') round = `<div class="note warn" style="margin:0 0 14px">${ICON.alert}<div>Округление ${fmt(o.round)} пропущено — на карте не хватило средств. Платёж прошёл как обычно.</div></div>`;
+  else if (o.status === 'reversed') round = `<div class="note gray" style="margin:0 0 14px">${ICON.refresh}<div>Платёж возвращён — округление ${fmt(o.round)} вернулось на карту.</div></div>`;
+  else if (!S.everEnabled && o.card === 'uzum'){ const r = roundUp(o.amount, 1000); if (r > 0) round = `
+    <div class="round-box promo">
+      <div class="rbx-h">${ICON.piggy}<span>Могли бы отложить +${fmt(r)}</span></div>
+      <div class="rbx-sub">С Авто-накоплениями этот платёж округлился бы до ${fmt(o.amount + r)}, а разница ушла бы в копилку.</div>
+      <span class="act" onclick="openPot()">Подключить →</span></div>`; }
+  return `
+  <div class="screen white"><div class="scroll">
+    ${fresh ? `<div class="topbar"><span style="width:40px"></span><span></span><button class="icon-btn" onclick="back()">${ICON.x}</button></div>` : topbar('')}
+    <div style="text-align:center;padding:4px 20px 18px">
+      <div style="width:76px;height:76px;border-radius:50%;background:${o.status==='reversed'?'#9A9AA5':'var(--ok)'};margin:0 auto;display:flex;align-items:center;justify-content:center;color:#fff;${fresh?'animation:notifIn .5s':''}">${(o.status==='reversed'?ICON.refresh:ICON.check).replace('<svg','<svg width="38" height="38"')}</div>
+      <div style="font-size:15px;color:var(--muted);margin-top:16px">${o.status==='reversed'?'Платёж возвращён':'Платёж выполнен'}</div>
+      <div style="font-size:34px;font-weight:700;letter-spacing:-.8px;margin-top:4px">−${fmt(o.amount)}</div>
+      <div style="font-size:16px;font-weight:500;margin-top:4px">${esc(o.merchant)}</div>
+    </div>
+    <div class="pad">
+      ${round}
+      <div style="background:var(--tile);border-radius:20px;padding:10px 18px;margin-bottom:14px">
+        ${line('Категория', cat.title)}
+        ${o.detail ? line('Реквизит', esc(o.detail)) : ''}
+        ${line('Дата', `${dayLabel(o.ts)}, ${hhmm(o.ts)}`)}
+        ${line('Карта', o.card === '9137' ? 'Kapitalbank •9137' : 'Uzum •5748')}
+        ${line('Комиссия', '0 сум')}
+        ${o.cashback ? line('Кешбэк', `<span style="color:var(--ok)">+${fmt(o.cashback)}</span>`) : ''}
+        ${line('Номер операции', o.id.toUpperCase())}
+      </div>
+      <div class="qa" style="padding:0 0 10px">
+        <button onclick="toast('Добавлено в избранное')"><span class="circle">${ICON.star}</span>В избранное</button>
+        <button onclick="toast('Чек сохранён')"><span class="circle">${ICON.doc}</span>Чек</button>
+        <button onclick="toast('Повторить платёж можно из категории')"><span class="circle">${ICON.refresh}</span>Повторить</button>
+      </div>
+    </div>
+  </div>
+  ${fresh ? `<div class="footer-cta"><button class="btn" onclick="back()">Готово</button></div>` : ''}
+  </div>`;
+};
 
 SCREENS.messages = () => {
   const list = [...S.notifications].sort((a,b)=>b.ts-a.ts);
@@ -710,14 +1140,15 @@ SCREENS.history = () => {
     if (dl !== lastDay){ html += `<div class="day-h" style="padding-left:4px">${dl}</div>`; lastDay = dl; }
     const logo = o.kind==='transfer'
       ? `<div class="logo" style="background:#F2F2F6;color:#2446C8;font-size:22px">V</div>`
-      : `<div class="logo" style="background:${merchantColor(o.merchant)}">${esc(o.merchant[0])}</div>`;
+      : `<div class="logo" style="background:${opColor(o)}">${esc(o.merchant[0])}</div>`;
     let tag = '';
     if (o.status==='done') tag = `<span class="badge" style="margin-top:6px">${ICON.piggy.replace('<svg','<svg width="13" height="13" style="margin-right:4px"')}+${fmt(o.round)} в копилку</span>`;
     if (o.status==='pending') tag = `<span class="badge" style="margin-top:6px"><span class="spinner" style="width:10px;height:10px;margin-right:6px"></span>Округление ${fmt(o.round)}…</span>`;
     if (o.status==='reversed') tag = `<span class="badge gray" style="margin-top:6px">Возврат · округление сторнировано</span>`;
     if (o.status==='skipped') tag = `<span class="badge warn" style="margin-top:6px">Округление не выполнено</span>`;
+    if (o.card==='9137') tag = `<span class="badge gray" style="margin-top:6px">Карта Kapitalbank •9137</span>`;
     html += `
-      <div class="row" style="padding:12px 4px;align-items:flex-start">
+      <div class="row" style="padding:12px 4px;align-items:flex-start" ${o.kind==='purchase'?`onclick="go('payReceipt',{id:'${o.id}'})"`:''}>
         ${logo}
         <div class="tx"><div class="t2" style="margin:0;text-transform:uppercase;font-size:15px">${esc(o.merchant)}</div>
         <div class="t1 ${o.status==='reversed'?'strike':''}" style="font-size:19px;margin-top:3px">– ${fmt(o.amount)}</div>${tag}</div>
@@ -795,7 +1226,7 @@ SCREENS.onboarding = ({step=0}) => {
      text:`Каждая покупка по карте Uzum округляется вверх до 1 000 сум, а разница сама переводится в вашу копилку. Вы тратите как обычно — копилка растёт.`},
     {art:`<div class="receipt">
             <div class="muted small" style="margin-bottom:4px">Ваша последняя покупка · ${dayLabel(lp.ts).toLowerCase()}, ${hhmm(lp.ts)}</div>
-            <div class="rl"><span style="display:flex;align-items:center;gap:10px"><span class="logo" style="width:32px;height:32px;border-radius:10px;font-size:14px;background:${merchantColor(lp.merchant)}">${lp.merchant[0]}</span><b>${esc(lp.merchant)}</b></span><b>${fmt(lp.amount)}</b></div>
+            <div class="rl"><span style="display:flex;align-items:center;gap:10px"><span class="logo" style="width:32px;height:32px;border-radius:10px;font-size:14px;background:${opColor(lp)}">${lp.merchant[0]}</span><b>${esc(lp.merchant)}</b></span><b>${fmt(lp.amount)}</b></div>
             <hr>
             <div class="rl"><span class="muted">Округлим до</span><b>${fmt(target)}</b></div>
             <div class="rl" style="background:var(--accent-soft);margin:6px -10px 0;padding:10px;border-radius:12px"><span style="color:var(--accent-ink);font-weight:600">В копилку</span><b style="color:var(--accent)">+${fmt(r)}</b></div>
@@ -987,7 +1418,7 @@ SCREENS.savings = () => {
     if (o.status==='reversed'){ right = `<div class="plus strike">+${fmt(o.round)}</div>`; sub = 'Возврат покупки · округление сторнировано'; }
     if (o.status==='skipped'){ right = `<div class="muted" style="font-weight:600">0 сум</div>`; sub = 'Не хватило средств на карте'; }
     hist += `<div class="row" onclick="roundSheet('${o.id}')">
-      <div class="logo" style="background:${merchantColor(o.merchant)}">${esc(o.merchant[0])}</div>
+      <div class="logo" style="background:${opColor(o)}">${esc(o.merchant[0])}</div>
       <div class="tx"><div class="t1" style="font-size:16px">${esc(o.merchant)}</div><div class="t2" style="font-size:14px">${sub}</div></div>
       <div class="right">${right}<div class="small muted" style="margin-top:3px">${hhmm(o.ts)}</div></div></div>`;
   });
@@ -1268,6 +1699,7 @@ function render(anim){
   const sc = host.querySelector('.scroll'); if (sc && keep) sc.scrollTop = keep;
   document.getElementById('sb').classList.toggle('light', cur.name === 'lock');
   lastKey = key;
+  if (cur.name === 'payForm') updatePay();
   if (cur.name === 'terms' && cur.params.mode === 'onboarding' && anim === 'push') termsChecked = false;
   renderPanelState();
 }
@@ -1310,15 +1742,16 @@ function runAction(a){
 /* =========================================================
    Business logic: purchases, round-ups, goal checks
    ========================================================= */
-function makePurchase({merchant, amount, insufficient=false, silent=false, ts=Date.now(), instant=false}={}){
-  const m = merchant ? MERCHANTS.find(x=>x.n===merchant) : MERCHANTS[Math.floor(Math.random()*MERCHANTS.length)];
+function makePurchase({merchant, color, cat, amount, insufficient=false, silent=false, ts=Date.now(), instant=false, card='uzum'}={}){
+  const m = merchant ? (MERCHANTS.find(x=>x.n===merchant) || {n:merchant, c:color||'#6E6E73'}) : MERCHANTS[Math.floor(Math.random()*MERCHANTS.length)];
   if (!amount) amount = Math.round((m.min + Math.random()*(m.max-m.min))/10)*10;
-  const op = {id:uid(), ts, kind:'purchase', merchant:m.n, amount, status:'off', round:0, th:S.threshold};
+  const op = {id:uid(), ts, kind:'purchase', merchant:m.n, color:color||m.c, cat, amount, status:'off', round:0, th:S.threshold, card};
+  if (card !== 'uzum'){ S.kapital = kapitalBalance() - amount; S.ops.push(op); save(); if (!silent) render(); return op; }
   S.cardBalance -= amount;
   if (S.enabled){
     const r = roundUp(amount, S.threshold);
     if (r === 0){ op.status = 'none'; }
-    else if (insufficient){ op.status = 'skipped'; op.round = r; }
+    else if (insufficient || S.cardBalance < r){ op.status = 'skipped'; op.round = r; }
     else { op.round = r; op.status = instant ? 'done' : 'pending'; S.cardBalance -= r; }
   }
   S.ops.push(op); save();
@@ -1478,6 +1911,9 @@ const demo = {
     if (v==='settings') return resetTo(['home','savings','settings']);
     if (v==='consents') return resetTo(['home','savings','settings','consents']);
     if (v==='history') return resetTo(['home','history']);
+    if (v==='payments') return tab('payments');
+    if (v.startsWith('payCat:')){ stack=[{name:'payments',params:{}}]; return go('payCat',{id:v.split(':')[1]}); }
+    if (v.startsWith('payForm:')){ const [,c,i] = v.split(':'); stack=[{name:'payments',params:{}},{name:'payCat',params:{id:c}}]; return go('payForm',{cat:c,p:+i}); }
   },
 };
 
