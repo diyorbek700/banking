@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uzum Bank — Авто-накопления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#DCDCE6;
+  --bg-top:#E6E6F2; --bg:#F2F2F7;
+  --card:#FFFFFF; --tile:#F2F2F6; --line:#ECECF1;
+  --text:#0B0B0F; --muted:#8A8A95; --muted-2:#B4B4BD;
+  --accent:#7000FF; --accent-2:#8B2EFF; --accent-soft:#F0E6FF; --accent-ink:#5A00CC;
+  --warn:#FF8A00; --warn-soft:#FFF3E3; --ok:#18A957; --ok-soft:#E4F6EC; --danger:#E5173F;
+  --r-card:22px; --r-tile:14px;
+  --font:'Onest',-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--page);font-family:var(--font);color:var(--text);display:flex;align-items:center;justify-content:center;gap:40px;min-height:100vh;padding:20px;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;color:inherit}
+
+/* ---------- device ---------- */
+.device-holder{flex:none;width:calc(414px * var(--s,1));height:calc(868px * var(--s,1))}
+.device{width:414px;height:868px;border-radius:64px;background:#101012;padding:12px;box-shadow:0 0 0 2px #2a2a2e inset,0 30px 80px rgba(20,10,60,.25);transform:scale(var(--s,1));transform-origin:top left;position:relative}
+.viewport{position:relative;width:390px;height:844px;border-radius:52px;overflow:hidden;background:var(--bg);isolation:isolate}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:60}
+.statusbar{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 44px;font-weight:600;font-size:17px;z-index:50;pointer-events:none;color:#000}
+.statusbar.light{color:#fff}
+.statusbar .sb-right{display:flex;gap:6px;align-items:center}
+.batt{display:inline-flex;align-items:center;justify-content:center;width:27px;height:13px;border-radius:4px;background:#34C759;color:#fff;font-size:10px;font-weight:700}
+
+/* ---------- screens ---------- */
+#screens{position:absolute;inset:0}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--bg-top) 0,var(--bg) 320px)}
+.screen.white{background:#fff}
+.screen.enter-push{animation:pushIn .32s cubic-bezier(.2,.8,.2,1)}
+.screen.enter-pop{animation:popIn .28s cubic-bezier(.2,.8,.2,1)}
+.screen.enter-fade{animation:fadeIn .25s ease}
+@keyframes pushIn{from{transform:translateX(100%)}to{transform:none}}
+@keyframes popIn{from{transform:translateX(-30%);opacity:.6}to{transform:none;opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:54px 0 24px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.has-nav .scroll{padding-bottom:110px}
+.pad{padding:0 16px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 16px}
+.topbar .title{font-weight:600;font-size:18px}
+.icon-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px}
+.icon-btn:active{background:rgba(0,0,0,.05)}
+.icon-btn svg{width:26px;height:26px}
+.h-big{font-size:32px;font-weight:700;letter-spacing:-.5px;padding:10px 20px 18px;line-height:1.1}
+.h-sec{font-size:22px;font-weight:700;padding:4px 4px 12px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+.card{background:var(--card);border-radius:var(--r-card);padding:8px 0;margin:0 16px 16px}
+.card.padded{padding:20px}
+.row{display:flex;align-items:center;gap:14px;padding:12px 20px;cursor:pointer;min-height:66px;position:relative}
+.row:active{background:rgba(0,0,0,.025)}
+.row .ic{flex:none;width:44px;height:44px;border-radius:var(--r-tile);background:var(--tile);display:flex;align-items:center;justify-content:center}
+.row .ic svg{width:24px;height:24px}
+.row .tx{flex:1;min-width:0}
+.row .t1{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t2{font-size:15px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{flex:none;color:#B9B9C2;width:22px;height:22px}
+.row .right{flex:none;text-align:right}
+
+.cardthumb{flex:none;width:56px;height:38px;border-radius:6px;position:relative;overflow:hidden}
+.cardthumb.uzum{background:linear-gradient(135deg,#8A2BFF,#5B00D6);border-bottom:2px solid #33D17A}
+.cardthumb.uzum:before{content:'uzum';position:absolute;top:-4px;left:3px;font-weight:800;font-size:17px;color:rgba(255,255,255,.35);letter-spacing:-.5px}
+.cardthumb.uzum:after{content:'VISA';position:absolute;right:5px;bottom:3px;font-weight:800;font-style:italic;font-size:9px;color:#fff}
+.cardthumb.dark{background:#0F0F12}
+.cardthumb.dark i{position:absolute;left:6px;top:6px;bottom:6px;width:2px;border-radius:2px}
+.cardthumb.dark b{position:absolute;right:6px;bottom:4px;color:#fff;font-size:12px;font-weight:800}
+
+/* search field */
+.field{margin:0 16px 20px;background:#fff;border-radius:24px;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 20px;color:var(--muted);font-size:18px}
+.field svg{width:26px;height:26px;color:#111}
+
+/* promo stories */
+.stories{display:flex;gap:11px;overflow-x:auto;padding:0 16px 22px;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{flex:none;width:100px;height:96px;border-radius:18px;padding:9px 10px;display:flex;flex-direction:column;justify-content:flex-end;font-size:11.5px;font-weight:600;line-height:1.15;position:relative;overflow:hidden;cursor:pointer}
+.story .big{position:absolute;top:6px;left:9px;font-weight:800;font-size:30px;letter-spacing:-1.5px}
+.story .emo{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.story.red{background:linear-gradient(160deg,#E0182D,#A70C1C);color:#fff}
+.story.red .emo{background:#fff}
+.story.white{background:#fff}
+.story.white .big{color:#6A00F4}
+.story.white .emo{background:linear-gradient(135deg,#3AB3F5,#1E88E5);color:#fff}
+.story.blue{background:linear-gradient(180deg,#F3F8FF,#D6E6FB)}
+.story.blue .big{color:#6A00F4}
+.story.blue .emo{background:linear-gradient(135deg,#FFD24A,#F2A600)}
+.story.new{background:linear-gradient(150deg,#8F3BFF,#5C00D8);color:#fff}
+.story.new .emo{background:rgba(255,255,255,.18)}
+.story.seen{opacity:.92}
+
+/* savings widget on home */
+.pot-widget{margin:0 16px 16px;border-radius:var(--r-card);background:#fff;padding:16px 18px;cursor:pointer;display:flex;gap:14px;align-items:center;position:relative;overflow:hidden}
+.pot-widget .pig{flex:none;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#9A4DFF,#6200EA);display:flex;align-items:center;justify-content:center;color:#fff}
+.pot-widget .pig svg{width:26px;height:26px}
+.badge{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font-size:11.5px;font-weight:700;background:var(--accent-soft);color:var(--accent)}
+.badge.warn{background:var(--warn-soft);color:#C66A00}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.gray{background:var(--tile);color:var(--muted)}
+.mini-prog{height:6px;border-radius:3px;background:var(--tile);overflow:hidden;margin-top:8px}
+.mini-prog i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .5s}
+
+/* bottom nav */
+.bottomnav{position:absolute;left:0;right:0;bottom:0;height:92px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid #EDEDF2;display:flex;align-items:flex-start;justify-content:space-around;padding-top:10px;z-index:30}
+.nav-it{width:74px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
+.nav-it.on{color:#111}
+.nav-it .nico{width:30px;height:24px;display:flex;align-items:center;justify-content:center}
+.nav-qr{width:64px;height:64px;border-radius:50%;background:var(--accent);margin-top:-22px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 18px rgba(112,0,255,.35)}
+.nav-qr svg{width:30px;height:30px}
+.nav-dot{position:absolute;top:-2px;right:18px;width:9px;height:9px;border-radius:50%;background:#FF2D2D;border:2px solid #fff}
+
+/* buttons */
+.btn{display:flex;width:100%;height:56px;border-radius:18px;align-items:center;justify-content:center;font-size:17px;font-weight:600;background:var(--accent);color:#fff;transition:opacity .2s,transform .1s}
+.btn:active{transform:scale(.985)}
+.btn.sec{background:var(--tile);color:#111}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.danger{background:#FDECEF;color:var(--danger)}
+.btn[disabled]{background:#D9D9E0;color:#fff;cursor:not-allowed;transform:none}
+.footer-cta{padding:12px 16px 30px;background:linear-gradient(180deg,rgba(242,242,247,0),var(--bg) 30%)}
+.white .footer-cta{background:linear-gradient(180deg,rgba(255,255,255,0),#fff 30%)}
+
+/* quick actions (like card sheet) */
+.qa{display:flex;justify-content:space-around;padding:6px 8px 4px}
+.qa button{display:flex;flex-direction:column;align-items:center;gap:9px;font-size:14px;font-weight:500;width:100px}
+.qa .circle{width:56px;height:56px;border-radius:50%;background:var(--tile);display:flex;align-items:center;justify-content:center}
+.qa .circle svg{width:24px;height:24px}
+
+/* pot hero */
+.pot-hero{margin:0 16px 16px;border-radius:26px;padding:22px 22px 20px;color:#fff;background:radial-gradient(120% 120% at 100% 0,#A865FF 0,#7000FF 45%,#4A00B5 100%);position:relative;overflow:hidden}
+.pot-hero:after{content:'';position:absolute;right:-40px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.07)}
+.pot-hero .lbl{font-size:14px;opacity:.8;font-weight:500}
+.pot-hero .sum{font-size:38px;font-weight:700;letter-spacing:-1px;margin:6px 0 4px}
+.pot-hero .sub{font-size:13px;opacity:.85;display:flex;align-items:center;gap:6px}
+.pot-hero .chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:600;margin-top:14px}
+
+/* chart */
+.chart{display:flex;align-items:flex-end;gap:8px;height:120px;padding:26px 2px 0;position:relative}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;cursor:default}
+.chart .bar{width:100%;max-width:26px;border-radius:4px 4px 0 0;background:#CDB0FF;min-height:2px;transition:height .5s}
+.chart .col.today .bar{background:var(--accent)}
+.chart .col .val{position:absolute;bottom:calc(var(--h) + 4px);font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .15s}
+.chart .col:hover .val,.chart .col.today .val{opacity:1}
+.chart-axis{display:flex;gap:8px;border-top:1px solid var(--line);padding:6px 2px 0}
+.chart-axis span{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+.chart-axis span.today{color:var(--text);font-weight:600}
+
+/* history */
+.day-h{font-size:17px;font-weight:600;padding:18px 20px 4px}
+.logo{flex:none;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff}
+.plus{color:var(--accent);font-weight:600;font-size:16px}
+.strike{text-decoration:line-through;color:var(--muted-2)!important}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* segmented */
+.seg{display:flex;background:var(--tile);border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;height:44px;border-radius:11px;font-weight:600;font-size:15px;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* switch */
+.sw{flex:none;width:51px;height:31px;border-radius:16px;background:#E3E3E8;position:relative;transition:background .2s}
+.sw:after{content:'';position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18);transition:transform .2s}
+.sw.on{background:var(--accent)}
+.sw.on:after{transform:translateX(20px)}
+
+/* onboarding */
+.ob-dots{display:flex;gap:6px;justify-content:center;padding:6px 0 0}
+.ob-dots i{width:7px;height:7px;border-radius:4px;background:#D6D6DE;transition:width .25s}
+.ob-dots i.on{width:22px;background:var(--accent)}
+.ob-art{height:300px;margin:6px 16px 26px;border-radius:30px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:radial-gradient(100% 100% at 50% 0,#F2EAFF,#E6D8FF)}
+.ob-title{font-size:28px;font-weight:700;letter-spacing:-.4px;line-height:1.15;padding:0 24px 12px}
+.ob-text{font-size:16px;line-height:1.45;color:#50505A;padding:0 24px}
+.coin{position:absolute;width:44px;height:44px;border-radius:50%;background:linear-gradient(145deg,#FFD76A,#F2A900);box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-weight:800;color:#8A5A00;font-size:12px}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+.receipt{background:#fff;border-radius:20px;padding:16px 18px;width:270px;box-shadow:0 12px 30px rgba(80,0,180,.12)}
+.receipt .rl{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:6px 0}
+.receipt .rl b{font-weight:600}
+.receipt hr{border:0;border-top:1px dashed #DDD;margin:6px 0}
+
+/* terms */
+.terms h3{font-size:17px;font-weight:600;margin:20px 0 6px}
+.terms p{font-size:15px;line-height:1.5;color:#3B3B44}
+.check{display:flex;gap:12px;align-items:center;font-size:15px;padding:14px 16px;background:#fff;border-radius:16px;margin-bottom:10px;cursor:pointer;transition:opacity .2s}
+.check.locked{opacity:.45;cursor:not-allowed}
+.check .box{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid #C9C9D2;display:flex;align-items:center;justify-content:center;color:#fff}
+.check .box.on{background:var(--accent);border-color:var(--accent)}
+.check .box svg{width:16px;height:16px}
+
+/* form */
+.inp{background:#fff;border-radius:18px;padding:10px 18px 12px;margin-bottom:12px}
+.inp label{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+.inp input{border:0;outline:0;width:100%;font-size:19px;font-weight:500;background:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip-b{height:36px;padding:0 14px;border-radius:18px;background:#fff;font-size:14px;font-weight:500}
+.chip-b.on{background:var(--accent);color:#fff}
+.emojis{display:flex;gap:8px;margin-bottom:14px}
+.emojis button{width:48px;height:48px;border-radius:14px;background:#fff;font-size:24px}
+.emojis button.on{box-shadow:0 0 0 2px var(--accent) inset;background:var(--accent-soft)}
+
+/* goal */
+.ring-wrap{position:relative;width:220px;height:220px;margin:6px auto 12px}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-wrap .ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ring-c .emo{font-size:40px}
+.ring-c .pct{font-size:30px;font-weight:700;margin-top:2px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 16px}
+.stat{background:#fff;border-radius:18px;padding:14px 16px}
+.stat .k{font-size:13px;color:var(--muted)}
+.stat .v{font-size:18px;font-weight:600;margin-top:4px}
+.note{display:flex;gap:12px;margin:0 16px 16px;padding:14px 16px;border-radius:18px;font-size:14px;line-height:1.4;align-items:flex-start}
+.note svg{flex:none;width:22px;height:22px;margin-top:1px}
+.note.warn{background:var(--warn-soft);color:#6B3B00}
+.note.warn svg{color:var(--warn)}
+.note.info{background:var(--accent-soft);color:#3A0A80}
+.note.info svg{color:var(--accent)}
+.note.gray{background:#fff;color:#50505A}
+.note .act{display:inline-block;margin-top:8px;font-weight:600;color:var(--accent)}
+
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:8px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(900px) rotate(720deg)}}
+
+/* lock screen */
+.lock{background:linear-gradient(170deg,#3D1A8C 0,#7A2BD9 45%,#E77BB6 100%);color:#fff}
+.lock .ltime{text-align:center;font-size:84px;font-weight:600;letter-spacing:-2px;margin-top:4px;line-height:1}
+.lock .ldate{text-align:center;font-size:19px;font-weight:500;opacity:.9;margin-top:74px}
+.lnotif{margin:0 10px 8px;border-radius:22px;background:rgba(245,245,250,.72);backdrop-filter:blur(20px);color:#111;padding:12px 14px;display:flex;gap:11px;cursor:pointer;animation:notifIn .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes notifIn{from{transform:translateY(30px) scale(.96);opacity:0}}
+.lnotif .aicon{flex:none;width:38px;height:38px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px}
+.lnotif .nt{flex:1;min-width:0}
+.lnotif .nt .h{display:flex;justify-content:space-between;font-size:15px;font-weight:600}
+.lnotif .nt .h span{font-weight:400;color:#6a6a74;font-size:13px}
+.lnotif .nt p{font-size:15px;line-height:1.3;margin-top:1px}
+.lock-hint{text-align:center;font-size:13px;opacity:.75;padding:0 30px}
+.lock-bar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#fff}
+.lock-empty{margin:0 20px;padding:16px;border-radius:20px;background:rgba(255,255,255,.14);font-size:14px;line-height:1.4;text-align:center}
+
+/* push banner */
+.push{position:absolute;top:10px;left:8px;right:8px;z-index:80;border-radius:24px;background:rgba(250,250,252,.9);backdrop-filter:blur(20px);box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;gap:11px;cursor:pointer;transform:translateY(-140%);transition:transform .45s cubic-bezier(.2,.9,.3,1.1)}
+.push.show{transform:translateY(44px)}
+.push .aicon{flex:none;width:38px;height:38px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px}
+.push .nt{flex:1;min-width:0}
+.push .h{display:flex;justify-content:space-between;font-size:15px;font-weight:600}
+.push .h span{font-weight:400;color:#777;font-size:13px}
+.push p{font-size:14.5px;line-height:1.3}
+
+/* sheet */
+.sheet-bg{position:absolute;inset:0;background:rgba(10,10,20,.32);z-index:70;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-bg.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:71;background:#fff;border-radius:30px 30px 0 0;padding:10px 0 34px;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow-y:auto}
+.sheet.show{transform:none}
+.sheet .grab{width:38px;height:5px;border-radius:3px;background:#D7D7DE;margin:0 auto 14px}
+.sheet h2{font-size:22px;font-weight:700;padding:4px 20px 8px}
+.sheet p.lead{font-size:15px;color:#50505A;padding:0 20px 16px;line-height:1.45}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:110px;transform:translate(-50%,20px);background:rgba(20,20,26,.92);color:#fff;font-size:14px;padding:11px 16px;border-radius:14px;z-index:90;opacity:0;transition:all .3s;max-width:330px;text-align:center;line-height:1.35;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* hidden amounts */
+.hidden-amt{letter-spacing:2px}
+
+/* ---------- demo panel ---------- */
+.panel{width:330px;max-height:calc(100vh - 40px);overflow-y:auto;background:#fff;border-radius:24px;padding:22px 20px;font-size:14px;box-shadow:0 10px 40px rgba(20,10,60,.08);scrollbar-width:thin}
+.panel h1{font-size:19px;font-weight:700;margin-bottom:4px}
+.panel .intro{color:var(--muted);font-size:13px;line-height:1.45;margin-bottom:14px}
+.panel h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:16px 0 8px;font-weight:700}
+.panel .pbtns{display:flex;flex-wrap:wrap;gap:6px}
+.panel .pbtns button{background:var(--tile);border-radius:10px;padding:8px 11px;font-size:13px;font-weight:500;text-align:left}
+.panel .pbtns button:hover{background:var(--accent-soft);color:var(--accent-ink)}
+.panel .pbtns button.primary{background:var(--accent);color:#fff}
+.panel select{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--tile);padding:0 10px;font:inherit;font-size:13px}
+.plog{margin-top:14px;background:#15151B;color:#E8E8F0;border-radius:14px;padding:12px 14px;font-size:12.5px;line-height:1.45;min-height:64px}
+.plog b{color:#C9A6FF}
+.pstate{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px}
+.pstate div{background:var(--tile);border-radius:8px;padding:6px 8px}
+.pstate b{display:block;font-size:13px}
+
+@media (max-width:820px){
+  body{flex-direction:column;justify-content:flex-start;gap:20px;padding:16px}
+  .panel{width:100%;max-width:414px;max-height:none}
+}
+</style>
+</head>
+<body>
+
+<div class="device-holder" id="holder">
+  <div class="device">
+    <div class="viewport" id="vp">
+      <div class="island"></div>
+      <div class="statusbar" id="sb">
+        <span id="sb-time">18:56</span>
+        <span class="sb-right">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".35"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.3c2.3 0 4.4.9 6 2.4l1.2-1.2A10.2 10.2 0 0 0 8.5.6 10.2 10.2 0 0 0 1.3 3.5l1.2 1.2a8.5 8.5 0 0 1 6-2.4Zm0 3.4c1.4 0 2.6.5 3.6 1.4l1.2-1.2a6.8 6.8 0 0 0-9.6 0l1.2 1.2c1-.9 2.2-1.4 3.6-1.4Zm0 3.4c.5 0 1 .2 1.3.5L8.5 11 7.2 9.6c.3-.3.8-.5 1.3-.5Z"/></svg>
+          <span class="batt">88</span>
+        </span>
+      </div>
+      <div id="screens"></div>
+      <div class="push" id="push"></div>
+      <div class="sheet-bg" id="sheetbg" onclick="closeSheet()"></div>
+      <div class="sheet" id="sheet"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+</div>
+
+<aside class="panel" id="panel">
+  <h1>Пульт демонстрации</h1>
+  <p class="intro">Это кликабельный прототип фичи «Авто-накопления»: жмите прямо на экран телефона. Кнопки ниже запускают события, которые в реальном приложении происходят сами: пуши, покупки, возвраты.</p>
+
+  <h4>Сценарий</h4>
+  <div class="pbtns">
+    <button class="primary" onclick="demo.fresh()">Новый клиент (фича выкл.)</button>
+    <button onclick="demo.month()">Месяц использования</button>
+  </div>
+
+  <h4>Push-уведомления</h4>
+  <div class="pbtns">
+    <button onclick="demo.offerPush()">Предложение подключить</button>
+    <button onclick="demo.digest()">Еженедельный дайджест</button>
+    <button onclick="demo.termsChange()">Изменение условий (за 10 дней)</button>
+  </div>
+
+  <h4>Операции по карте •5748</h4>
+  <div class="pbtns">
+    <button onclick="demo.purchase()">Покупка</button>
+    <button onclick="demo.purchases(10)">10 покупок</button>
+    <button onclick="demo.insufficient()">Не хватает на округление</button>
+    <button onclick="demo.refund()">Возврат последней покупки</button>
+  </div>
+
+  <h4>Цели</h4>
+  <div class="pbtns">
+    <button onclick="demo.deadline()">Дедлайн цели через 5 дней</button>
+    <button onclick="demo.reachGoal()">Докопить до цели</button>
+  </div>
+
+  <h4>Перейти к экрану</h4>
+  <select id="jump" onchange="demo.jump(this.value);this.value=''">
+    <option value="">— выберите экран —</option>
+    <option value="home">1. Главная</option>
+    <option value="lock:offer">2. Push-предложение</option>
+    <option value="onboarding">2. Онбординг (3 шага)</option>
+    <option value="terms">3. Условия округления</option>
+    <option value="connect">4. Подключение</option>
+    <option value="savings">5. Копилка</option>
+    <option value="goalForm">6. Новая цель</option>
+    <option value="goal">6. Прогресс цели</option>
+    <option value="lock:digest">7. Push-дайджест</option>
+    <option value="settings">8. Настройки</option>
+    <option value="consents">8. Мои согласия</option>
+    <option value="history">История операций</option>
+  </select>
+
+  <div class="plog" id="plog">Готово. Нажмите на виджет «Авто-накопления» на главной или пришлите push с предложением.</div>
+  <div class="pstate" id="pstate"></div>
+</aside>
+
+<script>
+/* =========================================================
+   Icons
+   ========================================================= */
+const I = (p, sw=2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICON = {
+  chevR: I('<path d="m9 5 7 7-7 7"/>'),
+  chevL: I('<path d="m15 5-7 7 7 7"/>', 2.4),
+  search: I('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 2.4),
+  eyeOff: I('<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.8 8.4 2 12 2 12s4 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>', 2.2),
+  eye: I('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>', 2.2),
+  scan: I('<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="6" y="8" width="12" height="8" rx="1.5"/><path d="M13 13h3"/>'),
+  plus: I('<path d="M12 5v14M5 12h14"/>', 2.2),
+  info: I('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
+  arrowUR: I('<path d="M7 17 17 7M8 7h9v9"/>', 2.2),
+  arrowDown: I('<path d="M12 5v14M6 13l6 6 6-6"/>', 2.2),
+  chart: I('<path d="M5 20v-6M10 20V9M15 20v-8M20 20V5"/>', 2.6),
+  x: I('<path d="M6 6l12 12M18 6 6 18"/>', 2.2),
+  globe: I('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'),
+  phone: I('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>'),
+  home: I('<path d="M4 10.5 12 4l8 6.5V20H4z"/><path d="M10 20v-5h4v5"/>'),
+  shield: I('<path d="M12 3 5 6v6c0 4 3 7.5 7 9 4-1.5 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/>'),
+  star: I('<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'),
+  trend: I('<path d="m3 17 6-6 4 4 8-8M15 7h6v6"/>'),
+  piggy: I('<path d="M19 9.5c.8.3 1.5 1 1.8 1.9"/><path d="M4.5 11.5C4.5 8 7.6 5.5 12 5.5c1.5 0 2.9.3 4 .8l2.5-1.3-.4 3a5.6 5.6 0 0 1 1.9 3.3H21v3h-1.4a6 6 0 0 1-2.1 2.4V19h-3v-1.2a9 9 0 0 1-3 0V19h-3v-1.9c-2.2-1.1-3.5-3-3.5-5.6Z"/><path d="M9.5 5.8a3 3 0 1 1 5.2-.9"/><circle cx="15.5" cy="10.5" r=".6" fill="currentColor"/>', 1.8),
+  target: I('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'),
+  settings: I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>', 1.8),
+  bell: I('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>'),
+  check: I('<path d="m5 12.5 4.5 4.5L19 7.5"/>', 3),
+  doc: I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
+  alert: I('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>'),
+  refresh: I('<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>'),
+  trash: I('<path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/>'),
+  edit: I('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/>'),
+  calendar: I('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>'),
+  sparkle: I('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>'),
+  lock: I('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+  card: I('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M14 15h3"/>'),
+  bank: I('<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>'),
+  exchange: I('<path d="M17 3l3 3-3 3M20 6H9a5 5 0 0 0-5 5M7 21l-3-3 3-3M4 18h11a5 5 0 0 0 5-5"/>'),
+  safe: I('<rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="12" cy="11.5" r="3"/><path d="M6 19v2M18 19v2"/>'),
+  qr: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M14 14h2.5v2.5M20 14v6h-3M14 20h.01"/></svg>`,
+};
+const navIcons = {
+  home: on => `<svg width="30" height="22" viewBox="0 0 30 22"><defs><linearGradient id="gh${on}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${on?'#9E7BFF':'#DADAE2'}"/><stop offset="1" stop-color="${on?'#6E4BFF':'#C4C4CE'}"/></linearGradient></defs><rect x="1" y="1" width="28" height="20" rx="4" fill="url(#gh${on})"/><rect x="1" y="6" width="28" height="3" fill="${on?'#fff':'#fff'}" opacity=".45"/></svg>`,
+  transfers: on => `<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="${on?'#9E7BFF':'#E2E2E8'}"/><path d="M8 13h10M14 8.5l4.5 4.5-4.5 4.5" stroke="${on?'#fff':'#8A8A95'}" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  payments: on => `<svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="4" fill="${on?'#A98BFF':'#E2E2E8'}"/><circle cx="22" cy="11" r="2" fill="${on?'#fff':'#9A9AA5'}"/></svg>`,
+  messages: on => `<svg width="28" height="24" viewBox="0 0 28 24"><path d="M3 2h22a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H11l-5 4v-4H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" fill="${on?'#A98BFF':'#E2E2E8'}"/><path d="M7 8h12M7 12h8" stroke="${on?'#fff':'#9A9AA5'}" stroke-width="2" stroke-linecap="round"/></svg>`,
+};
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WD = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const WD_FULL = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const DAY = 86400000;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function num(n){
+  const neg = n < 0; n = Math.abs(Math.round(n*100)/100);
+  const [i,d] = n.toFixed(2).split('.');
+  return (neg?'−':'') + i.replace(/\B(?=(\d{3})+(?!\d))/g,' ') + (d !== '00' ? ','+d : '');
+}
+const fmt = n => num(n) + ' сум';
+const money = n => S.hidden ? '<span class="hidden-amt">•••••</span> сум' : fmt(n);
+const startOfDay = t => { const d = new Date(t); d.setHours(0,0,0,0); return d.getTime(); };
+function dayLabel(t){
+  const diff = Math.round((startOfDay(Date.now()) - startOfDay(t)) / DAY);
+  if (diff === 0) return 'Сегодня';
+  if (diff === 1) return 'Вчера';
+  const d = new Date(t); return d.getDate() + ' ' + MONTHS[d.getMonth()];
+}
+const dateLong = t => { const d = new Date(t); return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(); };
+const dateShort = t => { const d = new Date(t); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); };
+const hhmm = t => { const d = new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+const roundUp = (amount, th) => { const r = Math.ceil(amount/th)*th - amount; return Math.round(r*100)/100; };
+const uid = () => Math.random().toString(36).slice(2,9);
+function plural(n, one, few, many){ n = Math.abs(n)%100; const n1 = n%10; if (n>10&&n<20) return many; if (n1>1&&n1<5) return few; if (n1===1) return one; return many; }
+
+/* seeded RNG so demo data is stable */
+function rng(seed){ return () => { seed = (seed*16807) % 2147483647; return (seed-1)/2147483646; }; }
+
+const MERCHANTS = [
+  {n:'Korzinka', c:'#E0182D', min:18000, max:160000},
+  {n:'Makro', c:'#D6001C', min:25000, max:220000},
+  {n:'Havas', c:'#00A651', min:15000, max:90000},
+  {n:'Evos', c:'#1B8E3C', min:32000, max:95000},
+  {n:'Oqtepa Lavash', c:'#F28C00', min:25000, max:70000},
+  {n:'Safia', c:'#8C5A3C', min:12000, max:60000},
+  {n:'Yandex Go', c:'#111111', min:11000, max:48000},
+  {n:'Uzum Market', c:'#7000FF', min:40000, max:350000},
+  {n:'Uzum Tezkor', c:'#9B51E0', min:30000, max:120000},
+  {n:'Pharmacy Dori-Darmon', c:'#0FA3B1', min:9000, max:80000},
+];
+const merchantColor = n => (MERCHANTS.find(m=>m.n===n)||{c:'#6E6E73'}).c;
+const TERMS = {version:'1.2', date: new Date(2026,8,1).getTime()};
+
+/* =========================================================
+   State
+   ========================================================= */
+function baseState(){
+  const now = Date.now();
+  const at = (daysAgo, h, m) => { const d = new Date(startOfDay(now) - daysAgo*DAY); d.setHours(h,m,0,0); return d.getTime(); };
+  // card history before the feature was enabled — purchases and transfers
+  const ops = [
+    {id:uid(), ts:at(1,19,40), kind:'purchase', merchant:'Korzinka', amount:46350, status:'off'},
+    {id:uid(), ts:at(1,13,5), kind:'purchase', merchant:'Evos', amount:41900, status:'off'},
+    {id:uid(), ts:at(2,19,52), kind:'transfer', merchant:'Paynet-Микробизнес', amount:28000, status:'off'},
+    {id:uid(), ts:at(3,20,29), kind:'transfer', merchant:'JAVOKHIR ABDUSAMATOV', amount:80000, status:'off'},
+    {id:uid(), ts:at(3,17,15), kind:'purchase', merchant:'Yandex Go', amount:23400, status:'off'},
+    {id:uid(), ts:at(3,15,39), kind:'transfer', merchant:'RAJABOVA SEVARA', amount:700000, status:'off'},
+    {id:uid(), ts:at(4,9,3), kind:'purchase', merchant:'Safia', amount:18700, status:'off'},
+    {id:uid(), ts:at(5,18,44), kind:'purchase', merchant:'Makro', amount:132250, status:'off'},
+    {id:uid(), ts:at(7,12,20), kind:'purchase', merchant:'Uzum Market', amount:89900, status:'off'},
+    {id:uid(), ts:at(9,20,10), kind:'purchase', merchant:'Oqtepa Lavash', amount:34500, status:'off'},
+    {id:uid(), ts:at(12,19,2), kind:'purchase', merchant:'Havas', amount:57120, status:'off'},
+    {id:uid(), ts:at(15,14,48), kind:'purchase', merchant:'Korzinka', amount:74630, status:'off'},
+    {id:uid(), ts:at(18,8,30), kind:'purchase', merchant:'Yandex Go', amount:16800, status:'off'},
+    {id:uid(), ts:at(22,13,12), kind:'purchase', merchant:'Evos', amount:38400, status:'off'},
+  ];
+  return {
+    enabled:false, everEnabled:false, threshold:1000,
+    digest:true, digestDay:0,
+    termsRead:false, consents:[], termsChange:null,
+    goals:[], ops, withdrawals:[],
+    cardBalance:293711.28, hidden:false,
+    dismissedAt:null, notifications:[], unread:false,
+    flags:{},
+  };
+}
+let S;
+try { S = JSON.parse(localStorage.getItem('uzum-autosave-v1')) || baseState(); } catch(e){ S = baseState(); }
+function save(){ try { localStorage.setItem('uzum-autosave-v1', JSON.stringify(S)); } catch(e){} }
+
+/* ---- derived ---- */
+const doneOps = () => S.ops.filter(o => o.status === 'done');
+function potBalance(){
+  const inn = doneOps().reduce((s,o)=>s+o.round,0);
+  const out = S.withdrawals.reduce((s,w)=>s+w.amount,0);
+  return Math.max(0, Math.round((inn-out)*100)/100);
+}
+function allocations(){
+  let rest = potBalance();
+  return S.goals.map(g => { const a = Math.min(rest, g.target); rest -= a; return {g, alloc:a, pct: g.target ? a/g.target : 0}; });
+}
+const allocOf = id => allocations().find(x => x.g.id === id);
+function weekRounds(){ const from = startOfDay(Date.now()) - 6*DAY; return doneOps().filter(o=>o.ts>=from).reduce((s,o)=>s+o.round,0); }
+function avgDaily(){
+  const from = Date.now() - 14*DAY;
+  const firstOn = Math.min(...doneOps().map(o=>o.ts), Date.now());
+  const days = Math.max(1, Math.min(14, (Date.now() - Math.max(from, firstOn))/DAY));
+  return doneOps().filter(o=>o.ts>=from).reduce((s,o)=>s+o.round,0) / days;
+}
+const lastPurchase = () => S.ops.filter(o=>o.kind==='purchase').sort((a,b)=>b.ts-a.ts)[0];
+const hasConsent = () => S.consents.some(c => c.version === TERMS.version);
+
+/* =========================================================
+   Navigation
+   ========================================================= */
+let stack = [{name:'home', params:{}}];
+const TABS = ['home','transfers','payments','messages'];
+function current(){ return stack[stack.length-1]; }
+function go(name, params={}){ closeSheet(); stack.push({name, params}); render('push'); }
+function replace(name, params={}){ closeSheet(); stack[stack.length-1] = {name, params}; render('fade'); }
+function back(){ closeSheet(); if (stack.length > 1){ stack.pop(); render('pop'); } }
+function tab(name){ closeSheet(); stack = [{name, params:{}}]; if (name==='messages') S.unread = false; render('fade'); }
+function resetTo(list){ closeSheet(); stack = list.map(n => typeof n === 'string' ? {name:n, params:{}} : n); render('push'); }
+
+/* =========================================================
+   Screens
+   ========================================================= */
+const topbar = (title='', right='') => `
+  <div class="topbar">
+    <button class="icon-btn" onclick="back()">${ICON.chevL}</button>
+    <div class="title">${title}</div>
+    <div style="min-width:40px;display:flex;justify-content:flex-end">${right}</div>
+  </div>`;
+const chev = `<span class="chev">${ICON.chevR}</span>`;
+const row = ({icon='', t1, t2='', onclick='', right=chev, iconStyle=''}) => `
+  <div class="row" onclick="${onclick}">
+    ${icon ? `<div class="ic" style="${iconStyle}">${icon}</div>` : ''}
+    <div class="tx"><div class="t1">${t1}</div>${t2 ? `<div class="t2">${t2}</div>` : ''}</div>
+    ${right}
+  </div>`;
+const bottomNav = active => `
+  <nav class="bottomnav">
+    <button class="nav-it ${active==='home'?'on':''}" onclick="tab('home')"><span class="nico">${navIcons.home(active==='home')}</span>Главная</button>
+    <button class="nav-it ${active==='transfers'?'on':''}" onclick="tab('transfers')"><span class="nico">${navIcons.transfers(active==='transfers')}</span>Переводы</button>
+    <button class="nav-qr" onclick="toast('Сканер QR в прототипе недоступен')">${ICON.qr}</button>
+    <button class="nav-it ${active==='payments'?'on':''}" onclick="tab('payments')"><span class="nico">${navIcons.payments(active==='payments')}</span>Платежи</button>
+    <button class="nav-it ${active==='messages'?'on':''}" onclick="tab('messages')"><span class="nico">${navIcons.messages(active==='messages')}</span>Сообщения${S.unread?'<i class="nav-dot"></i>':''}</button>
+  </nav>`;
+
+const SCREENS = {};
+
+/* ---------- 1. Home ---------- */
+SCREENS.home = () => {
+  const pot = potBalance();
+  const al = allocations();
+  const main = al.find(a => a.pct < 1) || al[0];
+  let widget;
+  if (!S.everEnabled){
+    widget = `
+      <div class="pot-widget" onclick="openPot()">
+        <div class="pig">${ICON.piggy}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:600">Авто-накопления</span><span class="badge">Новое</span></div>
+          <div class="muted" style="font-size:14.5px;margin-top:3px">Округляйте покупки и копите незаметно</div>
+        </div>${chev}
+      </div>`;
+  } else {
+    widget = `
+      <div class="pot-widget" onclick="openPot()">
+        <div class="pig">${ICON.piggy}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:600">${money(pot)}</span>${S.enabled?'':'<span class="badge gray">Выкл.</span>'}</div>
+          <div class="muted" style="font-size:14.5px;margin-top:2px">${main ? `Копилка · ${esc(main.g.emoji)} ${esc(main.g.name)} — ${Math.floor(main.pct*100)}%` : 'Копилка · Авто-накопления'}</div>
+          ${main ? `<div class="mini-prog"><i style="width:${Math.min(100,main.pct*100)}%"></i></div>` : ''}
+        </div>${chev}
+      </div>`;
+  }
+  return `
+  <div class="screen has-nav">
+    <div class="scroll">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:40px 14px 22px 24px">
+        <div style="font-size:34px;font-weight:700;letter-spacing:-.6px;display:flex;align-items:center;gap:6px">Diyorbek <span style="width:22px;height:22px;display:inline-flex">${ICON.chevR}</span></div>
+        <div style="display:flex;gap:4px">
+          <button class="icon-btn" onclick="toast('Поиск в прототипе недоступен')">${ICON.search}</button>
+          <button class="icon-btn" onclick="S.hidden=!S.hidden;save();render()">${S.hidden?ICON.eye:ICON.eyeOff}</button>
+        </div>
+      </div>
+      <div class="field" onclick="tab('transfers')">Перевести на карту ${ICON.scan}</div>
+      <div class="stories">
+        <div class="story new" onclick="openPot()"><span class="big" style="font-size:26px;top:10px">+1к</span><span class="emo">🐷</span>Авто-<br>накопления</div>
+        <div class="story red"><span class="big">7%</span><span class="emo">🛒</span>Кешбэк 7% в Корзинке</div>
+        <div class="story white"><span class="big">5%</span><span class="emo">✈️</span>Кешбэк 5% на покупки в Telegram</div>
+        <div class="story blue"><span class="big">3%</span><span class="emo">💡</span>Кешбэк за оплату света</div>
+      </div>
+      <div class="card">
+        <div class="row" onclick="cardSheet()">
+          <div class="cardthumb uzum"></div>
+          <div class="tx"><div class="t1">${money(S.cardBalance)}</div><div class="t2">5748 · Карта Uzum</div></div>${chev}
+        </div>
+        <div class="row" onclick="toast('Раздел вкладов в прототипе недоступен')">
+          <div class="ic" style="background:linear-gradient(145deg,#4B4E5C,#2B2D36);color:#fff;font-weight:800;font-size:24px">%</div>
+          <div class="tx"><div class="t1">Откройте гибкий вклад</div><div class="t2">Снятие в любой момент</div></div>${chev}
+        </div>
+        <div class="row">
+          <div class="cardthumb dark"><i style="background:#F5C400"></i><b>U</b></div>
+          <div class="tx"><div class="t1">${money(153831)}</div><div class="t2">9137 · Kapitalbank</div></div>${chev}
+        </div>
+        <div class="row">
+          <div class="cardthumb dark"><i style="background:#2F4FD0"></i><b>U</b></div>
+          <div class="tx"><div class="t1">${money(0)}</div><div class="t2">9728 · Asia Alliance Bank</div></div>${chev}
+        </div>
+      </div>
+      ${widget}
+      <div class="card">
+        ${row({icon:`<span style="color:#fff">${ICON.sparkle}</span>`, iconStyle:'background:linear-gradient(145deg,#9A4DFF,#6200EA)', t1:'Кешбэк и привилегии', t2:'521 897 сум в этом году'})}
+      </div>
+      <div class="card">
+        ${row({icon:ICON.globe, t1:'Международные переводы', t2:'Получить и отправить'})}
+        ${row({icon:ICON.chart, t1:'История операций', t2:'Поступления и расходы', onclick:"go('history')"})}
+        ${row({icon:ICON.phone, t1:'Оплата телефона', t2:'97 433-19-48'})}
+        ${row({icon:ICON.home, t1:'Мой дом', t2:'Коммунальные услуги'})}
+        ${row({icon:ICON.shield, t1:'Страхование', t2:'Автомобиля, Путешествий'})}
+        ${row({icon:ICON.star, t1:'Избранное', t2:'Переводы и платежи'})}
+        ${row({icon:ICON.trend, t1:'Курсы валют', t2:'На эту минуту'})}
+      </div>
+    </div>
+    ${bottomNav('home')}
+  </div>`;
+};
+function openPot(){
+  if (!S.everEnabled) go('onboarding', {step:0});
+  else go('savings');
+}
+function cardSheet(){
+  openSheet(`
+    <div class="qa">
+      <button onclick="toast('Реквизиты: 8600 **** **** 5748')"><span class="circle">${ICON.info}</span>Реквизиты</button>
+      <button onclick="toast('Пополнение в прототипе недоступно')"><span class="circle">${ICON.plus}</span>Пополнить</button>
+      <button onclick="tab('transfers')"><span class="circle">${ICON.arrowUR}</span>Перевести</button>
+    </div>
+    <div style="height:18px"></div>
+    ${row({icon:ICON.chart, t1:'История операций', onclick:"go('history')"})}
+    ${row({icon:ICON.piggy, t1:'Авто-накопления', t2:S.enabled?`Округление до ${num(S.threshold)} сум`:'Выключены', onclick:'closeSheet();openPot()'})}
+    ${row({icon:ICON.x, t1:'Отвязать карту', onclick:"toast('Недоступно в прототипе')"})}
+  `);
+}
+
+/* ---------- Tabs: transfers / payments / messages ---------- */
+SCREENS.transfers = () => `
+  <div class="screen has-nav"><div class="scroll">
+    <div class="h-big" style="padding-top:40px">Переводы</div>
+    <div class="field">Перевести на карту ${ICON.scan}</div>
+    <div class="stories">
+      ${[['H','#C9A13B','Azamat Umarov','9529'],['U','#2446C8','Abdulloh Qosimov','0645'],['V','#2446C8','Dostonbek S.','4589'],['U','#2446C8','Sayda K.','3208']].map(([l,c,n,d])=>`
+        <div class="story white" style="width:112px;justify-content:space-between"><b style="font-size:22px;color:${c};font-weight:800">${l}</b><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden">${n}<div class="muted">${d}</div></div></div>`).join('')}
+    </div>
+    <div class="card">
+      ${row({icon:ICON.card, t1:'Себе', t2:'На карту'})}
+      ${row({icon:ICON.globe, t1:'Международные переводы', t2:'Получить и отправить'})}
+      ${row({icon:ICON.safe, t1:'По номеру счёта', t2:'Внутри Узбекистана'})}
+      ${row({icon:ICON.bank, t1:'По реквизитам', t2:'Перевод или оплата'})}
+      ${row({icon:ICON.exchange, t1:'Обмен валют', t2:'Покупка и продажа'})}
+    </div>
+  </div>${bottomNav('transfers')}</div>`;
+
+SCREENS.payments = () => `
+  <div class="screen has-nav"><div class="scroll">
+    <div class="h-big" style="padding-top:40px">Платежи</div>
+    <div class="pad" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      ${[['🚌','Оплата по реквизитам'],['📱','Связь кешбэк 3%'],['🍔','Рестораны'],['🏪','Магазины и Салоны'],['🏠','Коммунальные кешбэк 3%'],['💉','Медицина'],['📶','Провайдеры кешбэк 3%'],['🎓','Образование'],['🎭','Развлечения']].map(([e,t])=>`
+        <div style="background:#fff;border-radius:20px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;font-size:13px;font-weight:600;padding:8px"><span style="font-size:28px;filter:hue-rotate(0)">${e}</span>${t}</div>`).join('')}
+    </div>
+  </div>${bottomNav('payments')}</div>`;
+
+SCREENS.messages = () => {
+  const list = [...S.notifications].sort((a,b)=>b.ts-a.ts);
+  return `
+  <div class="screen has-nav"><div class="scroll">
+    <div class="h-big" style="padding-top:40px">Сообщения</div>
+    ${list.length ? `<div class="card">${list.map(n => `
+      <div class="row" style="align-items:flex-start" onclick="${n.action?`runAction('${n.action}')`:''}">
+        <div class="ic" style="background:var(--accent-soft);color:var(--accent)">${ICON[n.icon]||ICON.bell}</div>
+        <div class="tx"><div class="t1" style="white-space:normal;font-size:16px">${esc(n.title)}</div><div class="t2" style="white-space:normal;line-height:1.35">${esc(n.text)}</div><div class="small muted" style="margin-top:4px">${dayLabel(n.ts)}, ${hhmm(n.ts)}</div></div>
+      </div>`).join('')}</div>`
+    : `<div class="note gray">${ICON.bell}<div>Здесь появятся уведомления банка: пуши Авто-накоплений, дайджесты и изменения условий.</div></div>`}
+  </div>${bottomNav('messages')}</div>`;
+};
+
+/* ---------- Card history ---------- */
+SCREENS.history = () => {
+  const ops = [...S.ops].sort((a,b)=>b.ts-a.ts);
+  let html = '', lastDay = '';
+  ops.forEach(o => {
+    const dl = dayLabel(o.ts);
+    if (dl !== lastDay){ html += `<div class="day-h" style="padding-left:4px">${dl}</div>`; lastDay = dl; }
+    const logo = o.kind==='transfer'
+      ? `<div class="logo" style="background:#F2F2F6;color:#2446C8;font-size:22px">V</div>`
+      : `<div class="logo" style="background:${merchantColor(o.merchant)}">${esc(o.merchant[0])}</div>`;
+    let tag = '';
+    if (o.status==='done') tag = `<span class="badge" style="margin-top:6px">${ICON.piggy.replace('<svg','<svg width="13" height="13" style="margin-right:4px"')}+${fmt(o.round)} в копилку</span>`;
+    if (o.status==='pending') tag = `<span class="badge" style="margin-top:6px"><span class="spinner" style="width:10px;height:10px;margin-right:6px"></span>Округление ${fmt(o.round)}…</span>`;
+    if (o.status==='reversed') tag = `<span class="badge gray" style="margin-top:6px">Возврат · округление сторнировано</span>`;
+    if (o.status==='skipped') tag = `<span class="badge warn" style="margin-top:6px">Округление не выполнено</span>`;
+    html += `
+      <div class="row" style="padding:12px 4px;align-items:flex-start">
+        ${logo}
+        <div class="tx"><div class="t2" style="margin:0;text-transform:uppercase;font-size:15px">${esc(o.merchant)}</div>
+        <div class="t1 ${o.status==='reversed'?'strike':''}" style="font-size:19px;margin-top:3px">– ${fmt(o.amount)}</div>${tag}</div>
+        <div class="muted" style="font-size:15px">${hhmm(o.ts)}</div>
+      </div>`;
+  });
+  return `<div class="screen white"><div class="scroll">
+    ${topbar('', `<button class="icon-btn" onclick="toast('Фильтры недоступны в прототипе')">${I('<path d="M4 7h16M4 17h16M9 4v6M15 14v6"/>',2.2)}</button>`)}
+    <div style="display:flex;gap:22px;padding:14px 20px 4px;font-size:32px;font-weight:700"><span>Все</span><span style="color:#B4B4BD">По продуктам</span></div>
+    <div style="padding:0 16px">${html}</div>
+  </div></div>`;
+};
+
+/* ---------- 2. Lock screen (push mockups) ---------- */
+SCREENS.lock = ({kind}) => {
+  const now = new Date();
+  const d = `${WD_FULL[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  let body = '';
+  if (kind === 'offer'){
+    const lp = lastPurchase();
+    const r = roundUp(lp.amount, 1000);
+    body = `
+      <div class="lnotif" onclick="unlockTo('offer')">
+        <div class="aicon">U</div>
+        <div class="nt"><div class="h">Uzum Bank <span>сейчас</span></div>
+          <p><b>Копите на сдачи 🐷</b><br>Округляйте покупки до 1 000 сум — например, с вашей покупки на ${fmt(lp.amount)} в копилку ушло бы ${fmt(r)}. Попробуйте Авто-накопления.</p></div>
+      </div>
+      <p class="lock-hint" style="margin-top:14px">Нажмите на уведомление, чтобы открыть приложение</p>`;
+  } else {
+    const w = weekRounds();
+    const blocked = !S.enabled && !S.everEnabled ? 'Авто-накопления не подключены — дайджест не отправляется.'
+      : !S.digest ? 'Клиент отключил уведомления по копилке — дайджест не отправляется.'
+      : w <= 0 ? 'За неделю не было ни одного округления — дайджест не отправляется, чтобы не создавать ощущение бесполезности функции.'
+      : '';
+    body = blocked
+      ? `<div class="lock-empty">🔕 Нет новых уведомлений<br><span style="opacity:.8;font-size:13px">${blocked}</span></div>`
+      : `<div class="lnotif" onclick="unlockTo('savings')">
+          <div class="aicon">U</div>
+          <div class="nt"><div class="h">Uzum Bank · Копилка <span>${hhmm(Date.now())}</span></div>
+          <p><b>Итоги недели 🐷</b><br>За неделю округления принесли +${fmt(w)}. В копилке уже ${fmt(potBalance())}.</p></div>
+        </div>
+        <p class="lock-hint" style="margin-top:14px">Дайджест показывает только сумму округлений и остаток копилки — без баланса карты и сумм покупок.</p>`;
+  }
+  return `
+  <div class="screen lock">
+    <div style="padding-top:54px;flex:1;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:center;margin-top:4px;opacity:.9">${ICON.lock.replace('<svg','<svg width="20" height="20"')}</div>
+      <div class="ldate" style="margin-top:14px">${d}</div>
+      <div class="ltime">${hhmm(now)}</div>
+      <div style="flex:1"></div>
+      ${body}
+      <div style="height:90px"></div>
+      <div style="display:flex;justify-content:space-between;padding:0 46px 40px">
+        <span style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.18)"></span>
+        <span style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.18)"></span>
+      </div>
+      <div class="lock-bar" onclick="unlockTo('home')" style="cursor:pointer"></div>
+    </div>
+  </div>`;
+};
+function unlockTo(where){
+  if (where === 'offer') resetTo(['home', {name:'onboarding', params:{step:0, fromPush:true}}]);
+  else if (where === 'savings') resetTo(['home','savings']);
+  else resetTo(['home']);
+}
+
+/* ---------- 2. Onboarding ---------- */
+SCREENS.onboarding = ({step=0}) => {
+  const lp = lastPurchase();
+  const th = 1000, target = lp.amount + roundUp(lp.amount, th), r = roundUp(lp.amount, th);
+  const slides = [
+    {art:`<div class="coin float" style="left:60px;top:70px">+350</div><div class="coin float" style="right:70px;top:50px;animation-delay:.6s">+650</div><div class="coin float" style="left:110px;bottom:60px;animation-delay:1.1s">+120</div>
+          <div style="width:130px;height:130px;border-radius:40px;background:linear-gradient(145deg,#9A4DFF,#6200EA);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 20px 40px rgba(112,0,255,.3)">${ICON.piggy.replace('<svg','<svg width="70" height="70"')}</div>`,
+     title:'Копите на сдачи — без усилий',
+     text:`Каждая покупка по карте Uzum округляется вверх до 1 000 сум, а разница сама переводится в вашу копилку. Вы тратите как обычно — копилка растёт.`},
+    {art:`<div class="receipt">
+            <div class="muted small" style="margin-bottom:4px">Ваша последняя покупка · ${dayLabel(lp.ts).toLowerCase()}, ${hhmm(lp.ts)}</div>
+            <div class="rl"><span style="display:flex;align-items:center;gap:10px"><span class="logo" style="width:32px;height:32px;border-radius:10px;font-size:14px;background:${merchantColor(lp.merchant)}">${lp.merchant[0]}</span><b>${esc(lp.merchant)}</b></span><b>${fmt(lp.amount)}</b></div>
+            <hr>
+            <div class="rl"><span class="muted">Округлим до</span><b>${fmt(target)}</b></div>
+            <div class="rl" style="background:var(--accent-soft);margin:6px -10px 0;padding:10px;border-radius:12px"><span style="color:var(--accent-ink);font-weight:600">В копилку</span><b style="color:var(--accent)">+${fmt(r)}</b></div>
+          </div>`,
+     title:'Вот как это работает на вашей покупке',
+     text:`Вы заплатили ${fmt(lp.amount)} в ${esc(lp.merchant)}. С Авто-накоплениями ещё ${fmt(r)} ушли бы в копилку — примерно через минуту после оплаты.`},
+    {art:`<div style="display:flex;flex-direction:column;gap:10px;width:280px">
+            ${[['🎯','Ставьте цели','Отпуск, телефон, подарок'],['🔓','Деньги доступны всегда','Вывод на карту в любой момент'],['💸','Без комиссии','Округление и вывод — бесплатно']].map(([e,a,b])=>`
+            <div style="background:#fff;border-radius:18px;padding:12px 14px;display:flex;gap:12px;align-items:center"><span style="font-size:26px">${e}</span><div><div style="font-weight:600">${a}</div><div class="muted small">${b}</div></div></div>`).join('')}
+          </div>`,
+     title:'Что дальше?',
+     text:'Ознакомьтесь с условиями, выберите шаг округления — и функция включится сразу, без визита в отделение. Выключить можно в любой момент.'},
+  ];
+  const s = slides[step];
+  return `
+  <div class="screen white">
+    <div class="scroll" style="padding-bottom:0">
+      <div class="topbar">
+        ${step>0 ? `<button class="icon-btn" onclick="replace('onboarding',{step:${step-1}})">${ICON.chevL}</button>` : '<span style="width:40px"></span>'}
+        <div class="ob-dots">${slides.map((_,i)=>`<i class="${i===step?'on':''}"></i>`).join('')}</div>
+        <button class="icon-btn" onclick="dismissOnboarding()">${ICON.x}</button>
+      </div>
+      <div class="ob-art">${s.art}</div>
+      <div class="ob-title">${s.title}</div>
+      <div class="ob-text">${s.text}</div>
+    </div>
+    <div class="footer-cta">
+      ${step<2 ? `<button class="btn" onclick="replace('onboarding',{step:${step+1}})">Далее</button>`
+               : `<button class="btn" onclick="go('terms',{mode:'onboarding'})">Посмотреть условия</button>`}
+    </div>
+  </div>`;
+};
+function dismissOnboarding(){
+  if (!S.everEnabled){ S.dismissedAt = Date.now(); save(); }
+  resetTo(['home']);
+  setTimeout(() => toast('Хорошо! Напомним не раньше чем через 30 дней'), 350);
+  log(`Онбординг закрыт без согласия. <b>Повторное предложение</b> — не раньше ${dateShort(Date.now()+30*DAY)}.`);
+}
+
+/* ---------- 3. Terms ---------- */
+let termsChecked = false;
+SCREENS.terms = ({mode='view'}) => {
+  const change = S.termsChange;
+  return `
+  <div class="screen">
+    <div class="scroll" id="terms-scroll" onscroll="termsScrolled(this)">
+      ${topbar('')}
+      <div class="h-big" style="padding-bottom:6px">Условия округления</div>
+      <div class="pad muted small" style="padding:0 20px 14px">Редакция ${TERMS.version} от ${dateShort(TERMS.date)}</div>
+      ${change ? `<div class="note info">${ICON.info}<div>С ${dateShort(change.effective)} вступает в силу редакция ${change.version}: шаг округления 5 000 сум станет доступен в настройках. Остальные условия не меняются.</div></div>` : ''}
+      <div class="card padded terms">
+        <h3 style="margin-top:0">1. Как считается округление</h3>
+        <p>Каждая оплата картой Uzum •5748 округляется вверх до выбранного шага — 500, 1 000 или 2 000 сум. Разница переводится в копилку «Авто-накопления» в течение ~1 минуты после операции. Если сумма покупки уже кратна шагу, округление не производится.</p>
+        <h3>2. Комиссия</h3>
+        <p>Сервис бесплатный. Комиссия за перевод округлений в копилку и за вывод средств на карту не взимается.</p>
+        <h3>3. Доступность средств</h3>
+        <p>Средства в копилке не блокируются и доступны по первому требованию: вывести их на карту можно в любой момент в приложении.</p>
+        <h3>4. Если не хватает средств</h3>
+        <p>Если на карте недостаточно денег для округления, перевод в копилку не выполняется. Сама покупка проходит как обычно — вы получите уведомление.</p>
+        <h3>5. Отмены и возвраты</h3>
+        <p>Если покупка отменена или возвращена продавцом, соответствующее округление автоматически возвращается на карту (сторнируется).</p>
+        <h3>6. Отключение</h3>
+        <p>Функцию можно выключить в настройках в любой момент. При выключении округления прекращаются, накопленные средства остаются в копилке.</p>
+        <h3>7. Уведомления</h3>
+        <p>Раз в неделю, в выбранный вами день, мы присылаем дайджест: сумму округлений за неделю и остаток копилки. Баланс карты и суммы отдельных покупок в уведомлениях не показываются. Если за неделю округлений не было, дайджест не отправляется.</p>
+        <h3>8. Изменение условий</h3>
+        <p>Об изменении условий банк уведомляет всех подключённых клиентов не менее чем за 10 дней до вступления новой редакции в силу. Дата и версия вашего согласия хранятся в разделе «Мои согласия».</p>
+        <div id="terms-end" style="height:1px"></div>
+      </div>
+      ${mode==='onboarding' ? `
+        <div class="pad">
+          <div class="check ${S.termsRead?'':'locked'}" id="terms-check" onclick="toggleTermsCheck()">
+            <span class="box ${termsChecked?'on':''}" id="terms-box">${termsChecked?ICON.check:''}</span>
+            <span>Я ознакомился с условиями Авто-накоплений</span>
+          </div>
+          <div class="muted small" id="terms-hint" style="text-align:center;padding:4px 0 8px;${S.termsRead?'display:none':''}">Дочитайте условия до конца, чтобы продолжить</div>
+        </div>` : ''}
+    </div>
+    ${mode==='onboarding' ? `<div class="footer-cta"><button class="btn" id="terms-btn" ${termsChecked&&S.termsRead?'':'disabled'} onclick="go('connect')">Принимаю, продолжить</button></div>`
+      : (S.termsChange && S.enabled && !S.consents.some(c=>c.version===S.termsChange.version)) ? `<div class="footer-cta"><button class="btn" onclick="acceptNewTerms()">Ознакомился с новой редакцией</button></div>` : ''}
+  </div>`;
+};
+function termsScrolled(el){
+  if (S.termsRead) return;
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 140){
+    S.termsRead = true; save();
+    const c = document.getElementById('terms-check'); if (c) c.classList.remove('locked');
+    const h = document.getElementById('terms-hint'); if (h) h.style.display = 'none';
+  }
+}
+function toggleTermsCheck(){
+  if (!S.termsRead){ toast('Сначала дочитайте условия до конца'); return; }
+  termsChecked = !termsChecked;
+  document.getElementById('terms-box').className = 'box' + (termsChecked?' on':'');
+  document.getElementById('terms-box').innerHTML = termsChecked ? ICON.check : '';
+  const b = document.getElementById('terms-btn'); if (b) b.disabled = !termsChecked;
+}
+function acceptNewTerms(){
+  S.consents.push({version:S.termsChange.version, ts:Date.now(), note:`Вступает в силу ${dateShort(S.termsChange.effective)}`});
+  save(); back(); toast('Согласие с редакцией '+S.termsChange.version+' сохранено');
+}
+
+/* ---------- 4. Connect ---------- */
+let connectDraft = {on:true, th:1000};
+SCREENS.connect = () => {
+  const lp = lastPurchase();
+  const th = connectDraft.th, r = roundUp(lp.amount, th);
+  const month = S.ops.filter(o=>o.kind==='purchase' && o.ts > Date.now()-30*DAY);
+  const est = month.reduce((s,o)=>s+roundUp(o.amount, th),0);
+  return `
+  <div class="screen">
+    <div class="scroll">
+      ${topbar('')}
+      <div class="h-big">Подключение</div>
+      <div class="card">
+        <div class="row" onclick="connectDraft.on=!connectDraft.on;render()">
+          <div class="ic" style="background:var(--accent-soft);color:var(--accent)">${ICON.piggy}</div>
+          <div class="tx"><div class="t1">Авто-накопления</div><div class="t2">Карта Uzum •5748</div></div>
+          <span class="sw ${connectDraft.on?'on':''}"></span>
+        </div>
+      </div>
+      <div class="card padded" style="${connectDraft.on?'':'opacity:.45;pointer-events:none'}">
+        <div style="font-weight:600;font-size:17px;margin-bottom:4px">Округлять до</div>
+        <div class="muted small" style="margin-bottom:14px">Больше шаг — быстрее копится. Изменить можно в настройках.</div>
+        <div class="seg">${[500,1000,2000].map(v=>`<button class="${th===v?'on':''}" onclick="connectDraft.th=${v};render()">${num(v)} сум</button>`).join('')}</div>
+        <div style="margin-top:18px;background:var(--tile);border-radius:16px;padding:14px 16px">
+          <div class="muted small">На примере вашей покупки в ${esc(lp.merchant)}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:16px;font-weight:500;flex-wrap:wrap">
+            ${fmt(lp.amount)} <span class="muted">→</span> ${fmt(lp.amount + r)} <span class="plus" style="margin-left:auto">+${fmt(r)}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+          <span style="font-size:22px">📈</span>
+          <div style="font-size:14px;line-height:1.35">По вашим покупкам за 30 дней вы бы накопили <b>≈ ${fmt(est)}</b> в месяц</div>
+        </div>
+      </div>
+      <div class="note gray">${ICON.shield}<div>Без комиссии. Деньги в копилке не заблокированы — вывод на карту в любой момент.</div></div>
+    </div>
+    <div class="footer-cta"><button class="btn" ${connectDraft.on?'':'disabled'} onclick="activate()">Включить Авто-накопления</button></div>
+  </div>`;
+};
+function activate(){
+  S.enabled = true; S.everEnabled = true; S.threshold = connectDraft.th; S.dismissedAt = null;
+  if (!hasConsent()) S.consents.push({version:TERMS.version, ts:Date.now()});
+  save();
+  log(`Фича включена. Порог: <b>${num(S.threshold)} сум</b>. Согласие v${TERMS.version} сохранено.`);
+  resetTo(['home', 'activated']);
+}
+
+SCREENS.activated = () => `
+  <div class="screen white">
+    <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:54px 30px 0">
+      <div style="width:110px;height:110px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 20px 50px rgba(112,0,255,.35);animation:notifIn .5s">${ICON.check.replace('<svg','<svg width="54" height="54"')}</div>
+      <div style="font-size:28px;font-weight:700;margin:28px 0 10px;letter-spacing:-.4px">Авто-накопления включены</div>
+      <div class="muted" style="font-size:16px;line-height:1.45">Следующая покупка по карте •5748 округлится до ${num(S.threshold)} сум, а разница уйдёт в копилку.</div>
+    </div>
+    <div class="footer-cta">
+      <button class="btn" onclick="resetTo(['home','savings',{name:'goalForm',params:{}}])">Поставить цель</button>
+      <button class="btn ghost" style="margin-top:4px" onclick="resetTo(['home','savings'])">Перейти в копилку</button>
+    </div>
+  </div>`;
+
+/* ---------- 5. Savings dashboard ---------- */
+SCREENS.savings = () => {
+  const pot = potBalance();
+  const al = allocations();
+  const free = pot - al.reduce((s,a)=>s+a.alloc,0);
+  // weekly chart
+  const today = startOfDay(Date.now());
+  const days = [...Array(7)].map((_,i) => {
+    const from = today - (6-i)*DAY;
+    const sum = doneOps().filter(o=>o.ts>=from && o.ts<from+DAY).reduce((s,o)=>s+o.round,0);
+    return {from, sum, label: WD[new Date(from).getDay()], today: i===6};
+  });
+  const max = Math.max(...days.map(d=>d.sum), 1);
+  const week = days.reduce((s,d)=>s+d.sum,0);
+  const prevFrom = today - 13*DAY;
+  const prevWeek = doneOps().filter(o=>o.ts>=prevFrom && o.ts<today-6*DAY).reduce((s,o)=>s+o.round,0);
+  const delta = prevWeek ? Math.round((week-prevWeek)/prevWeek*100) : null;
+
+  const rounds = S.ops.filter(o => ['done','pending','reversed','skipped'].includes(o.status)).sort((a,b)=>b.ts-a.ts);
+  let hist = '', lastDay='';
+  rounds.slice(0, 40).forEach(o => {
+    const dl = dayLabel(o.ts);
+    if (dl !== lastDay){ hist += `<div class="day-h">${dl}</div>`; lastDay = dl; }
+    let right = `<div class="plus">+${fmt(o.round)}</div>`;
+    let sub = `${fmt(o.amount)} → ${fmt(o.amount + o.round)}`;
+    if (o.status==='pending'){ right = `<div class="plus"><span class="spinner"></span> ${fmt(o.round)}</div>`; sub = 'Переводим в копилку…'; }
+    if (o.status==='reversed'){ right = `<div class="plus strike">+${fmt(o.round)}</div>`; sub = 'Возврат покупки · округление сторнировано'; }
+    if (o.status==='skipped'){ right = `<div class="muted" style="font-weight:600">0 сум</div>`; sub = 'Не хватило средств на карте'; }
+    hist += `<div class="row" onclick="roundSheet('${o.id}')">
+      <div class="logo" style="background:${merchantColor(o.merchant)}">${esc(o.merchant[0])}</div>
+      <div class="tx"><div class="t1" style="font-size:16px">${esc(o.merchant)}</div><div class="t2" style="font-size:14px">${sub}</div></div>
+      <div class="right">${right}<div class="small muted" style="margin-top:3px">${hhmm(o.ts)}</div></div></div>`;
+  });
+  if (withdrawalsHtml()) hist = withdrawalsHtml() + hist;
+
+  return `
+  <div class="screen">
+    <div class="scroll">
+      ${topbar('Авто-накопления', `<button class="icon-btn" onclick="go('settings')">${ICON.settings}</button>`)}
+      ${!S.enabled ? `<div class="note warn">${ICON.alert}<div>Авто-накопления выключены — новые покупки не округляются. Накопленное остаётся в копилке.<br><span class="act" onclick="enableAgain()">Включить снова</span></div></div>` : ''}
+      <div class="pot-hero">
+        <div class="lbl">В копилке</div>
+        <div class="sum">${money(pot)}</div>
+        <div class="sub">${ICON.shield.replace('<svg','<svg width="15" height="15"')} Доступно в любой момент · без комиссии</div>
+        ${S.enabled ? `<div class="chip">${ICON.refresh.replace('<svg','<svg width="14" height="14"')} Округление до ${num(S.threshold)} сум</div>` : ''}
+      </div>
+      <div class="qa" style="margin:0 16px 18px">
+        <button onclick="go('goalForm',{})"><span class="circle" style="background:#fff">${ICON.target}</span>Цель</button>
+        <button onclick="withdrawSheet()"><span class="circle" style="background:#fff">${ICON.arrowUR}</span>На карту</button>
+        <button onclick="go('terms',{mode:'view'})"><span class="circle" style="background:#fff">${ICON.doc}</span>Условия</button>
+      </div>
+
+      <div class="card padded">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div class="muted small">За 7 дней</div><div style="font-size:24px;font-weight:700;margin-top:2px">+${fmt(week)}</div></div>
+          ${delta!==null ? `<span class="badge ${delta>=0?'ok':'gray'}">${delta>=0?'▲':'▼'} ${Math.abs(delta)}% к прошлой неделе</span>` : ''}
+        </div>
+        <div class="chart" role="img" aria-label="Округления по дням за последние 7 дней">
+          ${days.map(d=>{ const h = Math.round(d.sum/max*86); return `<div class="col ${d.today?'today':''}" style="--h:${h}px" title="${dayLabel(d.from)}: +${fmt(d.sum)}"><span class="val">${d.sum?'+'+num(d.sum):'0'}</span><div class="bar" style="height:${h}px"></div></div>`; }).join('')}
+        </div>
+        <div class="chart-axis">${days.map(d=>`<span class="${d.today?'today':''}">${d.today?'Сег.':d.label}</span>`).join('')}</div>
+      </div>
+
+      <div class="card" style="padding:14px 0 8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px 6px">
+          <div style="font-size:19px;font-weight:700">Цели</div>
+          <button style="color:var(--accent);font-weight:600" onclick="go('goalForm',{})">+ Новая</button>
+        </div>
+        ${al.length ? al.map(a => goalRow(a)).join('') + (free>0.009 && al.length ? `<div class="muted small" style="padding:4px 20px 8px">Свободный остаток без цели: ${fmt(free)}</div>`:'') :
+          `<div class="row" onclick="go('goalForm',{})"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">${ICON.target}</div><div class="tx"><div class="t1">Поставить цель</div><div class="t2">Например, отпуск или новый телефон</div></div>${chev}</div>`}
+      </div>
+
+      <div class="card" style="padding-bottom:8px">
+        <div style="font-size:19px;font-weight:700;padding:14px 20px 0">История округлений</div>
+        ${hist || `<div style="padding:24px 20px 20px;text-align:center"><div style="font-size:36px">🪙</div><div style="font-weight:600;margin-top:8px">Пока пусто</div><div class="muted small" style="margin-top:4px;line-height:1.4">Первое округление появится через минуту после следующей покупки картой •5748</div></div>`}
+      </div>
+    </div>
+  </div>`;
+};
+function withdrawalsHtml(){
+  if (!S.withdrawals.length) return '';
+  return `<div class="day-h">Выводы на карту</div>` + [...S.withdrawals].reverse().map(w => `
+    <div class="row"><div class="ic">${ICON.arrowUR}</div><div class="tx"><div class="t1" style="font-size:16px">На карту •5748</div><div class="t2" style="font-size:14px">${dayLabel(w.ts)}, ${hhmm(w.ts)}</div></div><div class="right" style="font-weight:600">−${fmt(w.amount)}</div></div>`).join('');
+}
+const goalRow = a => `
+  <div class="row" onclick="go('goal',{id:'${a.g.id}'})">
+    <div class="ic" style="font-size:24px;background:var(--accent-soft)">${esc(a.g.emoji)}</div>
+    <div class="tx">
+      <div style="display:flex;justify-content:space-between;gap:8px"><div class="t1" style="font-size:16px">${esc(a.g.name)}</div>${a.pct>=1?'<span class="badge ok">Готово 🎉</span>':`<span class="small" style="font-weight:600">${Math.floor(a.pct*100)}%</span>`}</div>
+      <div class="mini-prog"><i style="width:${Math.min(100,a.pct*100)}%"></i></div>
+      <div class="t2" style="font-size:13px;margin-top:5px">${fmt(a.alloc)} из ${fmt(a.g.target)}${a.g.date?` · до ${dateShort(a.g.date)}`:''}</div>
+    </div>
+  </div>`;
+function roundSheet(id){
+  const o = S.ops.find(x=>x.id===id); if (!o) return;
+  const st = {done:['ok','Зачислено в копилку'], pending:['','Переводим…'], reversed:['gray','Сторнировано'], skipped:['warn','Не выполнено']}[o.status];
+  openSheet(`
+    <h2>${esc(o.merchant)}</h2>
+    <p class="lead">${dayLabel(o.ts)}, ${hhmm(o.ts)} · карта •5748 <span class="badge ${st[0]}" style="margin-left:6px">${st[1]}</span></p>
+    <div class="card" style="background:var(--tile);margin-bottom:14px">
+      <div class="row" style="min-height:48px"><div class="tx muted">Покупка</div><b>${fmt(o.amount)}</b></div>
+      <div class="row" style="min-height:48px"><div class="tx muted">Округлено до ${num(o.th||S.threshold)} сум</div><b>${fmt(o.amount+o.round)}</b></div>
+      <div class="row" style="min-height:48px"><div class="tx muted">В копилку</div><b style="color:var(--accent)">${o.status==='done'||o.status==='pending'?'+'+fmt(o.round):'0 сум'}</b></div>
+    </div>
+    ${o.status==='reversed'?`<div class="note gray">${ICON.refresh}<div>Продавец вернул деньги за покупку, поэтому ${fmt(o.round)} автоматически вернулись из копилки на карту.</div></div>`:''}
+    ${o.status==='skipped'?`<div class="note warn">${ICON.alert}<div>На карте не хватило средств для округления. Покупка прошла как обычно — округление просто пропущено.</div></div>`:''}
+    <div class="pad"><button class="btn sec" onclick="closeSheet()">Закрыть</button></div>`);
+}
+function withdrawSheet(){
+  const pot = potBalance();
+  if (pot <= 0){ toast('В копилке пока нет средств'); return; }
+  openSheet(`
+    <h2>Вывести на карту</h2>
+    <p class="lead">Средства доступны по первому требованию, без комиссии. Зачисление на карту Uzum •5748 — мгновенно.</p>
+    <div class="pad">
+      <div class="inp" style="background:var(--tile)"><label>Сумма, сум · доступно ${fmt(pot)}</label><input id="wd-amt" type="number" inputmode="numeric" value="${Math.floor(pot)}" min="1" max="${pot}"></div>
+      <div class="chips"><button class="chip-b" style="background:var(--tile)" onclick="document.getElementById('wd-amt').value=${pot}">Всё</button><button class="chip-b" style="background:var(--tile)" onclick="document.getElementById('wd-amt').value=${Math.floor(pot/2)}">Половину</button></div>
+      <button class="btn" onclick="doWithdraw()">Вывести</button>
+    </div>`);
+}
+function doWithdraw(){
+  const v = parseFloat(document.getElementById('wd-amt').value);
+  const pot = potBalance();
+  if (!(v>0)) { toast('Введите сумму'); return; }
+  if (v > pot + 0.001) { toast('Больше, чем есть в копилке'); return; }
+  S.withdrawals.push({ts:Date.now(), amount:v}); S.cardBalance += v; save();
+  closeSheet(); render(); toast(`${fmt(v)} переведены на карту •5748`);
+  log(`Вывод из копилки: <b>${fmt(v)}</b>. Без комиссии.`);
+}
+function enableAgain(){
+  if (hasConsent()){ S.enabled = true; save(); render(); toast('Авто-накопления снова включены'); }
+  else { termsChecked=false; go('terms',{mode:'onboarding'}); }
+}
+
+/* ---------- 6. Goal form & progress ---------- */
+let goalDraft = {};
+const GOAL_EMOJI = ['✈️','📱','🎁','🎧','🚗','🏠','🎓','💍'];
+SCREENS.goalForm = ({id}) => {
+  const g = id ? S.goals.find(x=>x.id===id) : null;
+  if (!goalDraft._for || goalDraft._for !== (id||'new')){
+    goalDraft = g ? {_for:id, name:g.name, target:g.target, date:g.date?new Date(g.date).toISOString().slice(0,10):'', emoji:g.emoji}
+                  : {_for:'new', name:'', target:'', date:'', emoji:'✈️'};
+  }
+  const min = new Date(Date.now()+DAY).toISOString().slice(0,10);
+  return `
+  <div class="screen">
+    <div class="scroll">
+      ${topbar('')}
+      <div class="h-big">${g?'Изменить цель':'Новая цель'}</div>
+      <div class="pad">
+        <div class="emojis">${GOAL_EMOJI.slice(0,6).map(e=>`<button class="${goalDraft.emoji===e?'on':''}" onclick="goalDraft.emoji='${e}';render()">${e}</button>`).join('')}</div>
+        <div class="inp"><label>Название</label><input id="g-name" placeholder="Например, Отпуск" value="${esc(goalDraft.name)}" oninput="goalDraft.name=this.value" maxlength="32"></div>
+        <div class="chips">${['Отпуск в Самарканде','Новый телефон','Подарок маме','Наушники'].map(n=>`<button class="chip-b" onclick="goalDraft.name='${n}';document.getElementById('g-name').value='${n}'">${n}</button>`).join('')}</div>
+        <div class="inp"><label>Сумма цели, сум</label><input id="g-target" type="number" inputmode="numeric" placeholder="500 000" value="${goalDraft.target}" oninput="goalDraft.target=this.value"></div>
+        <div class="chips">${[50000,150000,500000,1000000].map(v=>`<button class="chip-b" onclick="goalDraft.target=${v};document.getElementById('g-target').value=${v}">${num(v)}</button>`).join('')}</div>
+        <div class="inp"><label>Дата (необязательно)</label><input id="g-date" type="date" min="${min}" value="${goalDraft.date}" oninput="goalDraft.date=this.value"></div>
+        <p class="muted small" style="padding:4px 4px 0;line-height:1.4">Прогресс обновляется автоматически с каждым округлением. Если целей несколько, копилка наполняет их по очереди.</p>
+      </div>
+    </div>
+    <div class="footer-cta">
+      <button class="btn" onclick="saveGoal('${id||''}')">${g?'Сохранить':'Создать цель'}</button>
+      ${g?`<button class="btn danger" style="margin-top:8px" onclick="deleteGoal('${id}')">Удалить цель</button>`:''}
+    </div>
+  </div>`;
+};
+function saveGoal(id){
+  const name = (goalDraft.name||'').trim(), target = parseFloat(goalDraft.target);
+  if (!name){ toast('Введите название цели'); return; }
+  if (!(target >= 1000)){ toast('Сумма цели — от 1 000 сум'); return; }
+  const date = goalDraft.date ? new Date(goalDraft.date+'T23:59:00').getTime() : null;
+  let gid = id;
+  if (id){ Object.assign(S.goals.find(x=>x.id===id), {name, target, date, emoji:goalDraft.emoji}); S.flags['reached_'+id] = false; S.flags['deadline_'+id] = false; }
+  else { gid = uid(); S.goals.push({id:gid, name, target, date, emoji:goalDraft.emoji, created:Date.now()}); }
+  goalDraft = {}; save();
+  stack.pop(); if (!id) stack.push({name:'goal', params:{id:gid}});
+  render('fade');
+  checkGoals();
+}
+function deleteGoal(id){
+  openSheet(`<h2>Удалить цель?</h2><p class="lead">Накопленные деньги останутся в копилке — удалится только цель.</p>
+    <div class="pad"><button class="btn danger" onclick="S.goals=S.goals.filter(g=>g.id!=='${id}');save();goalDraft={};closeSheet();stack=stack.filter(s=>!(s.params&&s.params.id==='${id}'));render('fade');toast('Цель удалена')">Удалить</button>
+    <button class="btn sec" style="margin-top:8px" onclick="closeSheet()">Отмена</button></div>`);
+}
+
+SCREENS.goal = ({id}) => {
+  const a = allocOf(id);
+  if (!a) return SCREENS.savings();
+  const {g, alloc, pct} = a;
+  const reached = pct >= 1;
+  const C = 2*Math.PI*96, off = C*(1-Math.min(1,pct));
+  const rest = Math.max(0, g.target - alloc);
+  const avg = avgDaily();
+  const daysNeeded = avg > 0 ? Math.ceil(rest/avg) : null;
+  const daysLeft = g.date ? Math.ceil((g.date - Date.now())/DAY) : null;
+  const behind = !reached && g.date && daysLeft <= 7 && daysLeft >= 0 && (alloc + avg*daysLeft) < g.target;
+  const confetti = reached ? `<div class="confetti">${[...Array(40)].map((_,i)=>`<i style="left:${Math.random()*100}%;background:${['#7000FF','#FFC83D','#FF4D8D','#2ED47A','#3AB3F5'][i%5]};animation-duration:${1.8+Math.random()*1.6}s;animation-delay:${Math.random()*.6}s"></i>`).join('')}</div>` : '';
+  return `
+  <div class="screen">
+    ${confetti}
+    <div class="scroll">
+      ${topbar('', `<button class="icon-btn" onclick="go('goalForm',{id:'${id}'})">${ICON.edit}</button>`)}
+      <div style="text-align:center;padding:0 24px">
+        ${reached ? `<div style="font-size:28px;font-weight:700;letter-spacing:-.4px">Цель достигнута 🎉</div><div class="muted" style="margin-top:6px">Вы накопили на «${esc(g.name)}» — просто совершая покупки</div>`
+                  : `<div style="font-size:26px;font-weight:700;letter-spacing:-.4px">${esc(g.name)}</div><div class="muted" style="margin-top:4px">${g.date?`до ${dateLong(g.date)}`:'Без срока'}</div>`}
+      </div>
+      <div class="ring-wrap">
+        <svg width="220" height="220" viewBox="0 0 220 220"><circle cx="110" cy="110" r="96" stroke="#E7E0F5" stroke-width="16" fill="none"/><circle cx="110" cy="110" r="96" stroke="${reached?'#18A957':'#7000FF'}" stroke-width="16" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset .8s"/></svg>
+        <div class="ring-c"><div class="emo">${esc(g.emoji)}</div><div class="pct">${Math.floor(pct*100)}%</div><div class="muted small">${money(alloc)}</div></div>
+      </div>
+      ${behind ? `<div class="note warn">${ICON.alert}<div>До цели ${daysLeft} ${plural(daysLeft,'день','дня','дней')}, а при текущем темпе вы не успеете. Увеличьте порог округления до ${num(Math.min(2000,S.threshold*2))} сум, чтобы копить быстрее.<br><span class="act" onclick="go('settings')">Изменить порог →</span></div></div>` : ''}
+      <div class="stat-grid">
+        <div class="stat"><div class="k">Накоплено</div><div class="v">${money(alloc)}</div></div>
+        <div class="stat"><div class="k">Цель</div><div class="v">${fmt(g.target)}</div></div>
+        <div class="stat"><div class="k">Осталось</div><div class="v">${fmt(rest)}</div></div>
+        <div class="stat"><div class="k">${reached?'Статус':'Прогноз'}</div><div class="v">${reached?'Готово ✓':daysNeeded===null?'—':'≈ '+daysNeeded+' '+plural(daysNeeded,'день','дня','дней')}</div></div>
+      </div>
+      ${!reached ? `<div class="note info">${ICON.sparkle}<div>В среднем округления приносят ${fmt(Math.round(avg))} в день. Прогресс обновляется автоматически с каждой покупкой.</div></div>` : ''}
+    </div>
+    <div class="footer-cta">
+      ${reached ? `<button class="btn" onclick="withdrawSheet()">Вывести на карту</button><button class="btn ghost" style="margin-top:4px" onclick="go('goalForm',{})">Поставить новую цель</button>`
+                : `<button class="btn sec" onclick="back()">В копилку</button>`}
+    </div>
+  </div>`;
+};
+
+/* ---------- 8. Settings ---------- */
+SCREENS.settings = () => `
+  <div class="screen">
+    <div class="scroll">
+      ${topbar('')}
+      <div class="h-big">Настройки<br>Авто-накоплений</div>
+      <div class="card">
+        <div class="row" onclick="toggleEnabled()">
+          <div class="ic" style="background:var(--accent-soft);color:var(--accent)">${ICON.piggy}</div>
+          <div class="tx"><div class="t1">Авто-накопления</div><div class="t2">${S.enabled?'Покупки округляются':'Выключены'}</div></div>
+          <span class="sw ${S.enabled?'on':''}"></span>
+        </div>
+      </div>
+      <div class="card padded" style="${S.enabled?'':'opacity:.45;pointer-events:none'}">
+        <div style="font-weight:600;font-size:17px;margin-bottom:12px">Округлять до</div>
+        <div class="seg">${[500,1000,2000].map(v=>`<button class="${S.threshold===v?'on':''}" onclick="setThreshold(${v})">${num(v)} сум</button>`).join('')}</div>
+        <div class="muted small" style="margin-top:10px">Новый шаг применяется к следующим покупкам.</div>
+      </div>
+      <div class="card">
+        <div class="row" onclick="S.digest=!S.digest;save();render();log('Дайджест по копилке: <b>'+(S.digest?'вкл':'выкл')+'</b>')">
+          <div class="ic">${ICON.bell}</div>
+          <div class="tx"><div class="t1">Еженедельный дайджест</div><div class="t2">Сумма округлений за неделю</div></div>
+          <span class="sw ${S.digest?'on':''}"></span>
+        </div>
+        ${S.digest ? row({icon:ICON.calendar, t1:'День дайджеста', t2:WD_FULL[S.digestDay], onclick:'daySheet()'}) : ''}
+      </div>
+      <div class="card" style="padding:14px 0 8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px 6px">
+          <div style="font-size:19px;font-weight:700">Цели накопления</div>
+          <button style="color:var(--accent);font-weight:600" onclick="go('goalForm',{})">+ Новая</button>
+        </div>
+        ${allocations().map(goalRow).join('') || `<div class="muted small" style="padding:6px 20px 12px">Целей пока нет</div>`}
+      </div>
+      <div class="card">
+        ${row({icon:ICON.shield, t1:'Мои согласия', t2:S.consents.length?`Редакция ${S.consents[S.consents.length-1].version} от ${dateShort(S.consents[S.consents.length-1].ts)}`:'Нет согласий', onclick:"go('consents')"})}
+        ${row({icon:ICON.doc, t1:'Условия округления', t2:`Редакция ${TERMS.version}`, onclick:"go('terms',{mode:'view'})"})}
+      </div>
+    </div>
+  </div>`;
+function setThreshold(v){ S.threshold = v; save(); render(); toast(`Теперь покупки округляются до ${num(v)} сум`); log(`Порог округления: <b>${num(v)} сум</b>`); }
+function toggleEnabled(){
+  if (S.enabled){
+    openSheet(`<h2>Выключить Авто-накопления?</h2><p class="lead">Новые покупки перестанут округляться. ${fmt(potBalance())} останутся в копилке — их можно вывести в любой момент.</p>
+      <div class="pad"><button class="btn danger" onclick="S.enabled=false;save();closeSheet();render();log('Фича <b>выключена</b>. Округления не применяются.')">Выключить</button>
+      <button class="btn sec" style="margin-top:8px" onclick="closeSheet()">Оставить включёнными</button></div>`);
+  } else enableAgain();
+}
+function daySheet(){
+  openSheet(`<h2>День дайджеста</h2><p class="lead">В этот день мы пришлём сумму округлений за неделю.</p>
+    ${[1,2,3,4,5,6,0].map(d=>`<div class="row" style="min-height:52px" onclick="S.digestDay=${d};save();closeSheet();render()"><div class="tx"><div class="t1">${WD_FULL[d]}</div></div>${S.digestDay===d?`<span style="color:var(--accent);width:22px">${ICON.check}</span>`:''}</div>`).join('')}`);
+}
+
+SCREENS.consents = () => `
+  <div class="screen">
+    <div class="scroll">
+      ${topbar('')}
+      <div class="h-big">Мои согласия</div>
+      ${S.termsChange ? `<div class="note info">${ICON.info}<div>Новая редакция ${S.termsChange.version} вступает в силу ${dateShort(S.termsChange.effective)}. Уведомление отправлено ${dateShort(S.termsChange.announced)} — за ${Math.round((S.termsChange.effective-S.termsChange.announced)/DAY)} дней.<br><span class="act" onclick="go('terms',{mode:'view'})">Прочитать →</span></div></div>`:''}
+      <div class="card">
+        ${S.consents.length ? [...S.consents].reverse().map((c,i)=>`
+          <div class="row" onclick="go('terms',{mode:'view'})">
+            <div class="ic" style="${i===0?'background:var(--accent-soft);color:var(--accent)':''}">${ICON.doc}</div>
+            <div class="tx"><div class="t1">Редакция ${c.version}</div><div class="t2" style="white-space:normal;line-height:1.35">Принято ${dateShort(c.ts)} в ${hhmm(c.ts)}${c.note?' · '+c.note:''}</div></div>${i===0?'<span class="badge ok">Действует</span>':''}
+          </div>`).join('') : `<div class="muted" style="padding:18px 20px">Вы ещё не принимали условия</div>`}
+      </div>
+      <p class="muted small" style="padding:0 24px;line-height:1.45">Здесь хранится история версий условий, с которыми вы согласились. При изменении условий мы уведомляем не менее чем за 10 дней.</p>
+    </div>
+  </div>`;
+
+/* =========================================================
+   Render
+   ========================================================= */
+let lastKey = '';
+function render(anim){
+  const cur = current();
+  const key = cur.name + JSON.stringify(cur.params);
+  const host = document.getElementById('screens');
+  const oldScroll = host.querySelector('.scroll');
+  const keep = !anim && key === lastKey && oldScroll ? oldScroll.scrollTop : 0;
+  host.innerHTML = SCREENS[cur.name](cur.params || {});
+  const scr = host.firstElementChild;
+  if (anim) scr.classList.add('enter-'+anim);
+  const sc = host.querySelector('.scroll'); if (sc && keep) sc.scrollTop = keep;
+  document.getElementById('sb').classList.toggle('light', cur.name === 'lock');
+  lastKey = key;
+  if (cur.name === 'terms' && cur.params.mode === 'onboarding' && anim === 'push') termsChecked = false;
+  renderPanelState();
+}
+
+/* ---------- overlays ---------- */
+function openSheet(html){
+  const sh = document.getElementById('sheet');
+  sh.innerHTML = `<div class="grab"></div>` + html;
+  sh.classList.add('show'); document.getElementById('sheetbg').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('show');
+  document.getElementById('sheetbg').classList.remove('show');
+}
+let toastT;
+function toast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+let pushT;
+const ACTIONS = {};
+function push({title, text, action, icon='bell', store=true}){
+  const p = document.getElementById('push');
+  p.innerHTML = `<div class="aicon">U</div><div class="nt"><div class="h">Uzum Bank <span>сейчас</span></div><p><b>${esc(title)}</b><br>${esc(text)}</p></div>`;
+  p.onclick = () => { p.classList.remove('show'); if (action) runAction(action); };
+  p.classList.add('show');
+  clearTimeout(pushT); pushT = setTimeout(()=>p.classList.remove('show'), 5500);
+  if (store){ S.notifications.push({ts:Date.now(), title, text, action, icon}); S.unread = true; save(); }
+  if (current().name === 'home' || current().name === 'messages') setTimeout(()=>render(), 50);
+}
+function runAction(a){
+  const [name, arg] = a.split(':');
+  if (name === 'goal') resetTo(['home','savings',{name:'goal', params:{id:arg}}]);
+  else if (name === 'savings') resetTo(['home','savings']);
+  else if (name === 'settings') resetTo(['home','savings','settings']);
+  else if (name === 'terms') resetTo(['home','savings','settings',{name:'terms',params:{mode:'view'}}]);
+  else if (name === 'offer') resetTo(['home',{name:'onboarding',params:{step:0}}]);
+}
+
+/* =========================================================
+   Business logic: purchases, round-ups, goal checks
+   ========================================================= */
+function makePurchase({merchant, amount, insufficient=false, silent=false, ts=Date.now(), instant=false}={}){
+  const m = merchant ? MERCHANTS.find(x=>x.n===merchant) : MERCHANTS[Math.floor(Math.random()*MERCHANTS.length)];
+  if (!amount) amount = Math.round((m.min + Math.random()*(m.max-m.min))/10)*10;
+  const op = {id:uid(), ts, kind:'purchase', merchant:m.n, amount, status:'off', round:0, th:S.threshold};
+  S.cardBalance -= amount;
+  if (S.enabled){
+    const r = roundUp(amount, S.threshold);
+    if (r === 0){ op.status = 'none'; }
+    else if (insufficient){ op.status = 'skipped'; op.round = r; }
+    else { op.round = r; op.status = instant ? 'done' : 'pending'; S.cardBalance -= r; }
+  }
+  S.ops.push(op); save();
+  if (op.status === 'pending'){
+    setTimeout(() => { op.status = 'done'; save(); render(); checkGoals(); }, 2500);
+  }
+  if (!silent){
+    render();
+    if (op.status === 'skipped'){
+      push({title:'Округление пропущено', text:`На карте не хватило средств для округления покупки в ${m.n}. Сама покупка прошла успешно.`, icon:'info', action:'savings'});
+      log(`Покупка ${m.n} ${fmt(amount)} прошла. <b>Округление пропущено</b> — не хватило средств. Покупка не блокируется.`);
+    } else if (op.status === 'pending'){
+      toast(`${m.n}: −${fmt(amount)} · +${fmt(op.round)} в копилку через минуту`);
+      log(`Покупка ${m.n} <b>${fmt(amount)}</b> → округление до ${num(amount+op.round)} → <b>+${fmt(op.round)}</b> в копилку (~1 мин, в демо — 2,5 с).`);
+    } else if (op.status === 'none'){
+      log(`Покупка ${m.n} ${fmt(amount)} уже кратна ${num(S.threshold)} — округления нет.`);
+    } else {
+      toast(`${m.n}: −${fmt(amount)}`);
+      log(`Покупка ${m.n} ${fmt(amount)}. Фича выключена — <b>округление не применяется</b>.`);
+    }
+  }
+  return op;
+}
+function checkGoals(){
+  allocations().forEach(({g, alloc, pct}) => {
+    if (pct >= 1 && !S.flags['reached_'+g.id]){
+      S.flags['reached_'+g.id] = true; save();
+      push({title:`Цель «${g.name}» достигнута! 🎉`, text:`Вы накопили ${fmt(g.target)} на округлениях. Поздравляем!`, action:'goal:'+g.id, icon:'target'});
+      log(`Цель <b>${esc(g.name)}</b> достигнута → push-поздравление.`);
+    }
+    if (pct < 1 && g.date && !S.flags['deadline_'+g.id]){
+      const daysLeft = Math.ceil((g.date-Date.now())/DAY);
+      if (daysLeft <= 7 && daysLeft >= 0 && alloc + avgDaily()*daysLeft < g.target){
+        S.flags['deadline_'+g.id] = true; save();
+        push({title:`До цели «${g.name}» ${daysLeft} ${plural(daysLeft,'день','дня','дней')}`, text:`При текущем темпе не успеете. Увеличьте порог округления, чтобы копить быстрее.`, action:'settings', icon:'alert'});
+        log(`До цели ${daysLeft} дн., прогресс ${Math.floor(pct*100)}% → <b>push с рекомендацией поднять порог</b>.`);
+      }
+    }
+  });
+  if (['savings','goal','home','settings'].includes(current().name)) render();
+}
+
+/* =========================================================
+   Demo panel
+   ========================================================= */
+function log(html){ document.getElementById('plog').innerHTML = html; }
+function renderPanelState(){
+  document.getElementById('pstate').innerHTML = `
+    <div>Фича<b>${S.enabled?'Включена':S.everEnabled?'Выключена':'Не подключена'}</b></div>
+    <div>Порог<b>${num(S.threshold)} сум</b></div>
+    <div>Копилка<b>${fmt(potBalance())}</b></div>
+    <div>За неделю<b>+${fmt(weekRounds())}</b></div>
+    <div>Дайджест<b>${S.digest?WD_FULL[S.digestDay]:'Выкл.'}</b></div>
+    <div>Согласие<b>${S.consents.length?'v'+S.consents[S.consents.length-1].version:'—'}</b></div>`;
+}
+const demo = {
+  fresh(){ S = baseState(); save(); goalDraft={}; connectDraft={on:true,th:1000}; termsChecked=false; resetTo(['home']); log('Сценарий: <b>новый держатель карты</b>, фича не подключена. Тапните на виджет или пришлите push-предложение.'); },
+  month(){
+    S = baseState();
+    const now = Date.now(), R = rng(42);
+    S.enabled = S.everEnabled = true; S.threshold = 1000; S.termsRead = true;
+    S.consents = [{version:'1.1', ts:now-30*DAY}, {version:'1.2', ts:TERMS.date+2*DAY}];
+    S.ops = S.ops.filter(o => o.kind === 'transfer');
+    for (let d = 28; d >= 0; d--){
+      const n = d===0 ? 2 : 1 + Math.floor(R()*3);
+      for (let k = 0; k < n; k++){
+        const m = MERCHANTS[Math.floor(R()*MERCHANTS.length)];
+        const t = new Date(startOfDay(now) - d*DAY); t.setHours(9+Math.floor(R()*11), Math.floor(R()*60));
+        if (t.getTime() > now) t.setTime(now - (k+1)*3600000);
+        const amount = Math.round((m.min + R()*(m.max-m.min))/10)*10;
+        const r = roundUp(amount, 1000);
+        S.ops.push({id:uid(), ts:t.getTime(), kind:'purchase', merchant:m.n, amount, round:r, th:1000, status: r===0?'none':'done'});
+      }
+    }
+    // one refund and one skipped
+    const done = S.ops.filter(o=>o.status==='done');
+    done[5].status = 'reversed'; done[12].status = 'skipped';
+    S.goals = [
+      {id:'g1', name:'Наушники', target:30000, date:now+40*DAY, emoji:'🎧', created:now-25*DAY},
+      {id:'g2', name:'Отпуск в Самарканде', target:500000, date:null, emoji:'✈️', created:now-20*DAY},
+    ];
+    S.flags['reached_g1'] = potBalance() >= 30000;
+    S.notifications = [{ts:now-3*DAY, title:'Итоги недели 🐷', text:'За неделю округления принесли +6 450 сум. В копилке уже 21 380 сум.', action:'savings', icon:'piggy'}];
+    save(); goalDraft={}; resetTo(['home']);
+    log(`Сценарий: <b>месяц использования</b>. ${doneOps().length} округлений, в копилке ${fmt(potBalance())}, две цели.`);
+  },
+  offerPush(){
+    if (S.everEnabled){ log('Push-предложение <b>не отправлено</b>: фича уже подключена.'); toast('Клиент уже подключил фичу'); return; }
+    if (S.dismissedAt && Date.now()-S.dismissedAt < 30*DAY){
+      log(`Push-предложение <b>не отправлено</b>: клиент закрыл онбординг ${dateShort(S.dismissedAt)}. Повтор — не раньше ${dateShort(S.dismissedAt+30*DAY)} (правило «не чаще 1 раза в 30 дней»).`);
+      toast('Не чаще 1 раза в 30 дней'); return;
+    }
+    S.lastOfferAt = Date.now(); save();
+    resetTo([{name:'lock', params:{kind:'offer'}}]);
+    log('Push-предложение новому держателю карты с примером на <b>его последней покупке</b>. Нажмите на уведомление.');
+  },
+  digest(){
+    resetTo([{name:'lock', params:{kind:'digest'}}]);
+    const w = weekRounds();
+    if (!S.everEnabled) log('Дайджест <b>не отправлен</b>: фича не подключена.');
+    else if (!S.digest) log('Дайджест <b>не отправлен</b>: клиент отключил уведомления по копилке.');
+    else if (w<=0) log('Дайджест <b>не отправлен</b>: за неделю не было округлений.');
+    else { S.notifications.push({ts:Date.now(), title:'Итоги недели 🐷', text:`За неделю округления принесли +${fmt(w)}. В копилке уже ${fmt(potBalance())}.`, action:'savings', icon:'piggy'}); S.unread=true; save();
+      log(`Дайджест (${WD_FULL[S.digestDay]}): <b>+${fmt(w)}</b> за неделю, остаток копилки. Без баланса карты и сумм покупок.`); }
+  },
+  termsChange(){
+    if (!S.enabled){ log('Уведомление об изменении условий получают только <b>подключённые</b> клиенты.'); toast('Сначала подключите фичу'); return; }
+    S.termsChange = {version:'1.3', announced:Date.now(), effective:Date.now()+10*DAY}; save();
+    push({title:'Условия Авто-накоплений меняются', text:`С ${dateShort(S.termsChange.effective)} действует редакция 1.3. Нажмите, чтобы прочитать.`, action:'terms', icon:'doc'});
+    log(`Уведомление о новой редакции 1.3 — <b>за 10 дней</b> до вступления в силу (${dateShort(S.termsChange.effective)}).`);
+  },
+  purchase(){ makePurchase(); },
+  purchases(n){
+    for (let i=0;i<n;i++) makePurchase({silent:true, instant:true, ts:Date.now()-(n-i)*60000});
+    render(); checkGoals();
+    log(S.enabled ? `${n} покупок по карте. Копилка: <b>${fmt(potBalance())}</b>.` : `${n} покупок. Фича выключена — округлений нет.`);
+  },
+  insufficient(){
+    if (!S.enabled){ toast('Сначала подключите фичу'); log('Фича не включена — округления нет.'); return; }
+    makePurchase({insufficient:true});
+  },
+  refund(){
+    const o = S.ops.filter(o=>o.kind==='purchase' && (o.status==='done'||o.status==='pending')).sort((a,b)=>b.ts-a.ts)[0];
+    if (!o){ toast('Нет покупок с округлением'); log('Нет покупки с округлением для возврата.'); return; }
+    o.status = 'reversed'; S.cardBalance += o.amount + o.round; save(); render();
+    push({title:'Возврат покупки', text:`${o.merchant} вернул ${fmt(o.amount)}. Округление ${fmt(o.round)} вернулось на карту.`, action:'savings', icon:'refresh'});
+    log(`Возврат от мерчанта ${o.merchant}: округление <b>${fmt(o.round)} сторнировано</b>.`);
+  },
+  deadline(){
+    if (!S.enabled || !S.goals.length){ toast('Нужна включённая фича и цель'); log('Нужны включённая фича и хотя бы одна цель — например, «Месяц использования».'); return; }
+    const a = allocations().find(x=>x.pct<1);
+    if (!a){ log('Все цели уже достигнуты.'); return; }
+    a.g.date = Date.now() + 5*DAY; if (a.g.target < a.alloc + avgDaily()*6) a.g.target = Math.ceil((a.alloc + avgDaily()*5 + 150000)/1000)*1000;
+    S.flags['deadline_'+a.g.id] = false; save();
+    resetTo(['home','savings',{name:'goal', params:{id:a.g.id}}]);
+    checkGoals();
+  },
+  reachGoal(){
+    if (!S.enabled){ toast('Сначала подключите фичу'); return; }
+    const a = allocations().find(x=>x.pct<1);
+    if (!a){ toast('Сначала создайте цель'); log('Нет незавершённой цели. Создайте цель в копилке.'); return; }
+    let guard = 0;
+    while (allocOf(a.g.id).pct < 1 && guard++ < 3000){ makePurchase({silent:true, instant:true, ts:Date.now()-Math.floor(Math.random()*6)*DAY}); }
+    save(); resetTo(['home','savings',{name:'goal', params:{id:a.g.id}}]); checkGoals();
+  },
+  jump(v){
+    if (!v) return;
+    if (v.startsWith('lock:')){ resetTo([{name:'lock', params:{kind:v.split(':')[1]}}]); return; }
+    const needsOn = ['savings','goal','settings','consents'];
+    if (needsOn.includes(v) && !S.everEnabled){ log('Экран доступен после подключения — включил сценарий «Месяц использования».'); demo.month(); }
+    if (v==='home') return resetTo(['home']);
+    if (v==='onboarding') return resetTo(['home',{name:'onboarding',params:{step:0}}]);
+    if (v==='terms'){ termsChecked=false; return resetTo(['home',{name:'terms',params:{mode:S.everEnabled?'view':'onboarding'}}]); }
+    if (v==='connect') return resetTo(['home','connect']);
+    if (v==='goalForm') return resetTo(['home','savings',{name:'goalForm',params:{}}]);
+    if (v==='goal'){ if (!S.goals.length) return resetTo(['home','savings',{name:'goalForm',params:{}}]); return resetTo(['home','savings',{name:'goal',params:{id:S.goals[0].id}}]); }
+    if (v==='settings') return resetTo(['home','savings','settings']);
+    if (v==='consents') return resetTo(['home','savings','settings','consents']);
+    if (v==='history') return resetTo(['home','history']);
+  },
+};
+
+/* ---------- boot ---------- */
+function tick(){ document.getElementById('sb-time').textContent = hhmm(Date.now()); }
+function fit(){
+  const s = Math.min(1, (window.innerHeight - 40) / 868, (window.innerWidth - 32) / 414);
+  document.getElementById('holder').style.setProperty('--s', s);
+}
+S.ops.forEach(o => { if (o.status === 'pending') o.status = 'done'; });
+window.addEventListener('resize', fit);
+fit(); tick(); setInterval(tick, 15000);
+render();
+</script>
+</body>
+</html>
